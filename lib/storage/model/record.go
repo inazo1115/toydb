@@ -1,12 +1,8 @@
 package model
 
-/*import (
-	"fmt"
-)*/
-
 type Record struct {
-	name string
-	age int
+	name    string
+	age     int
 	message string
 }
 

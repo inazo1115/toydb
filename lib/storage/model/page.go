@@ -1,16 +1,12 @@
 package model
 
-//import (
-//	"fmt"
-//)
-
 const RecordsSize = 10
 
 type Page struct {
-	pid        int
+	pid int
 	//records    [RecordsSize]Record
-	records []byte
-	num_record int
+	records   []byte
+	numRecord int
 }
 
 func NewPage(pid int, data []byte) *Page {
@@ -21,6 +17,13 @@ func (p *Page) Pid() int {
 	return p.pid
 }
 
+func (p *Page) Records() []byte {
+	return p.records
+}
+
+func (p *Page) NumRecord() int {
+	return p.numRecord
+}
 
 /*
 func NewPage(pid int, records []Record) {

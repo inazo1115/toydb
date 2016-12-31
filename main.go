@@ -5,32 +5,35 @@ import (
 	"fmt"
 	
 	"github.com/inazo1115/toydb/lib/storage"
-	//"github.com/inazo1115/toydb/lib/pkg"
+	"github.com/inazo1115/toydb/lib/storage/model"
 )
 
+func log(msg interface{}) {
+	fmt.Println(msg)
+}
+
 func main() {
+	pa := storage.NewPageAccessor()
 	bm := storage.NewBufferManager()
 
 	bm.Dump()
 
-	fmt.Println("++ fetch ++")
-	bm.Fetch(0)
-	fmt.Println("++ fetch ++")
-	bm.Fetch(1)
+	data := []byte("datadatadatadata")
+	page := model.NewPage(0, data)
 
+	pa.Read(0)
+	pa.Read(1)
+
+	pid, err := pa.Create(page)
+	if err != nil {
+		panic(err)
+	}
 	bm.Dump()
 
-	fmt.Println("++ fetch ++")
-	bm.Fetch(2)
+	page, err = pa.Read(pid)
+	page, _ = pa.Read(pid)
 
-	bm.Dump()
-
-	fmt.Println("++ fetch ++")
-	bm.Fetch(0)
-	fmt.Println("++ fetch ++")
-	bm.Fetch(1)
-	fmt.Println("++ fetch ++")
-	bm.Fetch(3)
+	pa.WriteBackAll()
 
 	bm.Dump()
 }
