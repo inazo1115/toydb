@@ -1,28 +1,26 @@
-package file
+package model
 
-/*
-** packed implements
- */
-
-import (
-	"fmt"
-
-	"github.com/inazo1115/toydb/lib/toydb/record"
-)
+//import (
+//	"fmt"
+//)
 
 const RecordsSize = 10
 
 type Page struct {
 	pid        int
-	records    [RecordsSize]Record
+	//records    [RecordsSize]Record
+	records []byte
 	num_record int
 }
 
-type PageBinary struct {
-	pid        int
-	data       []byte
-	num_record int
+func NewPage(pid int, data []byte) *Page {
+	return &Page{pid, data, 100}
 }
+
+func (p *Page) Pid() int {
+	return p.pid
+}
+
 
 /*
 func NewPage(pid int, records []Record) {
@@ -34,10 +32,10 @@ func NewPage(pid int, records []Record) {
 }
 */
 
-func (p *Page) marshalBinary() PageBinary {
+/*func (p *Page) marshalBinary() PageBinary {
 	// TODO: impl
 }
 
-func (pb *PageBinary) unmarshalBinary() Page {
+func (p *Page) unmarshalBinary() Page {
 	// TODO: impl
-}
+}*/
