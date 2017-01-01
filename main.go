@@ -2,11 +2,12 @@
 package main
 
 import (
-	//"bytes"
-	"encoding/binary"
+	"bytes"
+	//"encoding/binary"
+	"encoding/gob"
 	"fmt"
-	"reflect"
-	
+	//"reflect"
+
 	//"github.com/inazo1115/toydb/lib/storage"
 	"github.com/inazo1115/toydb/lib/storage/model"
 )
@@ -16,6 +17,43 @@ func log(msg interface{}) {
 }
 
 func main() {
+	log("start")
+
+	page := model.NewPage(-1, -1)
+	page.AddRecord([]byte("foo"))
+	page.AddRecord([]byte("bar"))
+	page.AddRecord([]byte("baz"))
+	log(page)
+
+	var buf bytes.Buffer
+
+	// encode
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(page)
+	if err != nil {
+		panic(err)
+	}
+
+	bin := buf.Bytes()
+	//log(binary.Size(bin))
+	//log(bin)
+
+	foo := bytes.NewBuffer(bin)
+
+	//log(binary.Size(buf))
+	//log(binary.Size(buf.Bytes()))
+
+	// decode
+	dec := gob.NewDecoder(foo)
+	var p model.Page
+	err = dec.Decode(&p)
+	if err != nil {
+		panic(err)
+	}
+	log(string(p.Data()))
+}
+
+/*func main() {
 	log("start")
 
 	page := model.NewPage(100)
@@ -36,7 +74,7 @@ func main() {
 	log("=============")
 
 	page0 := &model.Page{}
-	
+
 	//reader := bytes.NewReader(buf.Bytes())
 
 	//v := reflect.Indirect(reflect.ValueOf(page0))
@@ -54,17 +92,7 @@ func main() {
 //}
 	log(page0)
 	log(page0.Pid())
-}
-
-
-
-
-
-
-
-
-
-
+}*/
 
 /*func main() {
 	pa := storage.NewPageAccessor()
@@ -91,7 +119,6 @@ func main() {
 
 	bm.Dump()
 }*/
-
 
 /*func main() {
 	dm := storage.NewDiskManager()
