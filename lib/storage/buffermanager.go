@@ -1,11 +1,15 @@
 package storage
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"fmt"
+	//"math/rand"
 
 	"github.com/inazo1115/toydb/lib/pkg"
 	"github.com/inazo1115/toydb/lib/storage/model"
+	"github.com/inazo1115/toydb/lib/util/datautil"
 )
 
 // BufferPoolSize is the size of BufferPool.
@@ -34,72 +38,79 @@ func NewBufferManager() *BufferManager {
 
 func (bm *BufferManager) Read(pid int) (*model.Page, error) {
 
-	// cache hit
+	// Return the page from the cache.
 	if frame_idx, ok := bm.hitPage(pid); ok {
-		log("hit")
-
-		bm.pin(frame_idx)
-		defer bm.unpin(frame_idx)
-
 		return bm.bufferpool[frame_idx].Page(), nil
-
 	}
 
-	log("not hit")
-
+	// Choose the frame which will be set the page.
 	frame_idx, ok := bm.getFreeBuffer()
 	if !ok {
 		frame_idx, _ = bm.chooseVictim()
 		bm.flushPage(frame_idx)
 	}
 
-	buffer := make([]byte, pkg.BlockSize)
-	err := bm.dm.Read(pid, buffer)
+	// Fetch the byte data from the disk storage.
+	buf := make([]byte, pkg.BlockSize)
+	err := bm.dm.Read(pid, buf)
 	if err != nil {
 		return nil, err
 	}
 
-	page := model.NewPage(pid, buffer) // deserialize
-	bm.setPage(frame_idx, pid, page)
+	// Deserialize from byte data to a page struct.
+	dec := gob.NewDecoder(bytes.NewBuffer(buf))
+	var page model.Page
+	err = dec.Decode(&page)
+	if err != nil {
+		return nil, err
+	}
+	bm.setPage(frame_idx, pid, &page)
 
-	bm.pin(frame_idx)
-	defer bm.unpin(frame_idx)
-
-	return page, nil
+	return &page, nil
 }
 
 func (bm *BufferManager) Update(pid int, page *model.Page) error {
 
-	if frame_idx, ok := bm.hitPage(pid); ok {
-		if bm.bufferpool[frame_idx].PinCount() == 0 {
-			bm.bufferpool[frame_idx].SetPage(page)
-			return nil
-		} else {
-			// TODO: wait
-			return errors.New("can't update")
-		}
-	} else {
+	// When the page isn't on the cache.
+	if _, ok := bm.hitPage(pid); !ok {
 		_, err := bm.Read(pid)
 		if err != nil {
 			return err
 		}
-		return bm.Update(pid, page)
 	}
+
+	frame_idx := bm.dict[pid]
+
+	if bm.bufferpool[frame_idx].PinCount() == 0 {
+		bm.bufferpool[frame_idx].SetPage(page)
+		return nil
+	} else {
+		// TODO: wait
+		return errors.New("can't update")
+	}
+
+	return nil
 }
 
 func (bm *BufferManager) Create(page *model.Page) (int, error) {
 
-	pid, err := bm.dm.GetFreePageID()
+	fmt.Println("++~~")
+	fmt.Println(datautil.Keys(bm.dict))
+	bm.WriteBackAll()
+
+	pid, err := bm.dm.GetFreePageID(datautil.Keys(bm.dict))
 	if err != nil {
 		return -1, err
 	}
 
-	frame_idx, ok := bm.getFreeBuffer()
-	if !ok {
-		frame_idx, _ := bm.chooseVictim()
+	var frame_idx int
+
+	if frame_idx, ok := bm.getFreeBuffer(); !ok {
+		frame_idx, _ = bm.chooseVictim()
 		bm.flushPage(frame_idx)
 	}
 
+	page.SetPid(int64(pid))
 	bm.setPage(frame_idx, pid, page)
 
 	return pid, nil
@@ -107,7 +118,10 @@ func (bm *BufferManager) Create(page *model.Page) (int, error) {
 
 func (bm *BufferManager) WriteBackAll() error {
 	for _, frame_idx := range bm.dict {
-		bm.flushPage(frame_idx)
+		err := bm.flushPage(frame_idx)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -127,8 +141,8 @@ func (bm *BufferManager) hitPage(pid int) (int, bool) {
 
 func (bm *BufferManager) getFreeBuffer() (int, bool) {
 	for i := 0; i < BufferPoolSize; i++ {
-		if frame_idx, ok := bm.dict[i]; !ok {
-			return frame_idx, true
+		if bm.bufferpool[i].Page() == nil {
+			return i, true
 		}
 	}
 	return -1, false
@@ -141,19 +155,37 @@ func (bm *BufferManager) setPage(frame_idx int, pid int, page *model.Page) {
 
 func (bm *BufferManager) chooseVictim() (int, bool) {
 	// TODO: use some algorithm (i.g. LRU, FIFO, ...)
-	for i := 0; i < BufferPoolSize; i++ {
+	/*for i := 0; i < BufferPoolSize; i++ {
 		if bm.bufferpool[i].PinCount() == 0 {
 			return i, true
 		}
 	}
-	return -1, false
+	return -1, false*/
+	return 0, true
+	//return rand.Intn(BufferPoolSize), true
 }
 
-func (bm *BufferManager) flushPage(frame_idx int) {
-	frame := bm.bufferpool[frame_idx]
-	page := frame.Page()
-	bm.dm.Write(page.Pid(), page.Records())
-	delete(bm.dict, page.Pid())
+func (bm *BufferManager) flushPage(frame_idx int) error {
+
+	// Get and delete the target page.
+	page := bm.bufferpool[frame_idx].Page()
+
+	// Do seriarize.
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(page)
+	if err != nil {
+		return err
+	}
+
+	// Write back the page to disk storage.
+	bm.dm.Write(int(page.Pid()), buf.Bytes())
+
+	// Clean the buffer.
+	bm.bufferpool[frame_idx].DeletePage()
+	delete(bm.dict, int(page.Pid()))
+
+	return nil
 }
 
 func (bm *BufferManager) Dump() {

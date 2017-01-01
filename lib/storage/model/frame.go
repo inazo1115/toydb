@@ -18,6 +18,10 @@ func (frame *Frame) SetPage(page *Page) {
 	frame.page = page
 }
 
+func(frame *Frame) DeletePage() {
+	frame.page = nil
+}
+
 func (frame *Frame) PinCount() int {
 	return frame.pinCount
 }

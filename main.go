@@ -2,13 +2,13 @@
 package main
 
 import (
-	"bytes"
+	//"bytes"
 	//"encoding/binary"
-	"encoding/gob"
+	//"encoding/gob"
 	"fmt"
 	//"reflect"
 
-	//"github.com/inazo1115/toydb/lib/storage"
+	"github.com/inazo1115/toydb/lib/storage"
 	"github.com/inazo1115/toydb/lib/storage/model"
 )
 
@@ -19,11 +19,49 @@ func log(msg interface{}) {
 func main() {
 	log("start")
 
-	page := model.NewPage(-1, -1)
+	pa := storage.NewPageAccessor()
+
+	page := model.NewPage(-1, -1, -1)
+	page.AddRecord([]byte("000"))
+	i, _ := pa.Create(page)
+	log(i)
+
+	page = model.NewPage(-1, -1, -1)
+	page.AddRecord([]byte("111"))
+	i, _ = pa.Create(page)
+	log(i)
+
+	page = model.NewPage(-1, -1, -1)
+	page.AddRecord([]byte("222"))
+	i, _ = pa.Create(page)
+	log(i)
+
+	page = model.NewPage(-1, -1, -1)
+	page.AddRecord([]byte("333"))
+	i, _ = pa.Create(page)
+	log(i)
+
+	/*page0, _ := pa.Read(0)
+	log(page0)
+	//log(string(page0.Data()))
+	pa.WriteBackAll()
+
+	page1, _ := pa.Read(1)
+	log(page1)*/
+	pa.WriteBackAll()
+}
+
+/*func main() {
+	log("start")
+
+	page := model.NewPage(0, -1, -1)
 	page.AddRecord([]byte("foo"))
 	page.AddRecord([]byte("bar"))
 	page.AddRecord([]byte("baz"))
 	log(page)
+
+	pa := storage.NewPageAccessor()
+	log(pa.Read(0))
 
 	var buf bytes.Buffer
 
@@ -51,7 +89,7 @@ func main() {
 		panic(err)
 	}
 	log(string(p.Data()))
-}
+}*/
 
 /*func main() {
 	log("start")

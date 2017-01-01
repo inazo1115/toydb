@@ -14,9 +14,10 @@ import (
 const recordSize = 24 // 8 * 3
 const StructMetaInfoSize = 16
 const Int64Size = 8
-const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + (Int64Size * 3))
+const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + (Int64Size * 4))
 
 type Page struct {
+	pid        int64
 	previous   int64
 	next       int64
 	numRecords int64
@@ -24,26 +25,34 @@ type Page struct {
 	data []byte
 }
 
-func NewPage(previous int64, next int64) *Page {
+func NewPage(pid int64, previous int64, next int64) *Page {
 	maxNumRecords := int(math.Floor(float64(FreeSpaceSize / recordSize)))
 	size := maxNumRecords * recordSize
-	return &Page{previous, next, 0, make([]byte, size)}
+	return &Page{pid, previous, next, 0, make([]byte, size)}
+}
+
+func (p *Page) Pid() int64 {
+	return p.pid
+}
+
+func (p *Page) SetPid(pid int64) {
+	p.pid = pid
 }
 
 func (p *Page) Previous() int64 {
 	return p.previous
 }
 
-func (p *Page) SetPrevious(p_ int64) {
-	p.previous = p_
+func (p *Page) SetPrevious(page int64) {
+	p.previous = page
 }
 
 func (p *Page) Next() int64 {
 	return p.next
 }
 
-func (p *Page) SetNext(p_ int64) {
-	p.next = p_
+func (p *Page) SetNext(page int64) {
+	p.next = page
 }
 
 func (p *Page) NumRecords() int64 {

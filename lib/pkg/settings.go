@@ -6,4 +6,4 @@ const IndexFile = "toy_db.idx"
 
 const SystemCalalog = "toy_db.sc"
 
-const BlockSize = 4094
+const BlockSize = 4096

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -51,20 +52,37 @@ func (dm *DiskManager) Write(pid int, data []byte) error {
 }
 
 // GetFreePageID returns the available free page id.
-func (dm *DiskManager) GetFreePageID() (int, error) {
+func (dm *DiskManager) GetFreePageID(used []int) (int, error) {
 
 	file, err := dm.getFile()
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	info, err := file.Stat()
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
-	pid := int(math.Floor(float64(info.Size() / pkg.BlockSize)))
-	return pid, nil
+	// TODO: refine selection logic.
+	min := int(math.Ceil(float64(info.Size()) / pkg.BlockSize))
+
+	if len(used) == 0 {
+		return min, nil
+	}
+
+	fmt.Println("min")
+	fmt.Println(min)
+
+	for pid := min; pid < (math.MaxInt64 / pkg.BlockSize) ; pid++ {
+		for _, v := range used {
+			if pid != v {
+				return pid, nil
+			}
+		}
+	}
+
+	return -1, errors.New("there is no free page id")
 }
 
 // Dump dumps bytes of specified block. It's for debug.
@@ -88,7 +106,6 @@ func (dm *DiskManager) Dump(pid int) {
 func (dm *DiskManager) getFile() (*os.File, error) {
 
 	file, err := os.OpenFile(pkg.DataFile, os.O_CREATE|os.O_RDWR, 0660)
-	defer file
 	if err != nil {
 		return nil, err
 	}
