@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"errors"
+	//"errors"
 	"fmt"
 	"math"
 	"os"
@@ -71,18 +71,14 @@ func (dm *DiskManager) GetFreePageID(used []int) (int, error) {
 		return min, nil
 	}
 
-	fmt.Println("min")
-	fmt.Println(min)
-
-	for pid := min; pid < (math.MaxInt64 / pkg.BlockSize) ; pid++ {
-		for _, v := range used {
-			if pid != v {
-				return pid, nil
-			}
+	max := -1
+	for _, v := range used {
+		if max < v {
+			max = v
 		}
 	}
 
-	return -1, errors.New("there is no free page id")
+	return int(math.Max(float64(min), float64(max + 1))), nil
 }
 
 // Dump dumps bytes of specified block. It's for debug.

@@ -41,13 +41,11 @@ func main() {
 	i, _ = pa.Create(page)
 	log(i)
 
-	/*page0, _ := pa.Read(0)
-	log(page0)
-	//log(string(page0.Data()))
-	pa.WriteBackAll()
+	/*for j := 0; j <= i; j++ {
+		ppp, _ := pa.Read(j)
+		log(ppp)
+	}*/
 
-	page1, _ := pa.Read(1)
-	log(page1)*/
 	pa.WriteBackAll()
 }
 

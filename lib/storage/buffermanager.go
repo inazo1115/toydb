@@ -94,9 +94,8 @@ func (bm *BufferManager) Update(pid int, page *model.Page) error {
 
 func (bm *BufferManager) Create(page *model.Page) (int, error) {
 
-	fmt.Println("++~~")
-	fmt.Println(datautil.Keys(bm.dict))
-	bm.WriteBackAll()
+	// TODO: remove this
+	//bm.WriteBackAll()
 
 	pid, err := bm.dm.GetFreePageID(datautil.Keys(bm.dict))
 	if err != nil {
@@ -105,7 +104,8 @@ func (bm *BufferManager) Create(page *model.Page) (int, error) {
 
 	var frame_idx int
 
-	if frame_idx, ok := bm.getFreeBuffer(); !ok {
+	frame_idx, ok := bm.getFreeBuffer()
+	if !ok {
 		frame_idx, _ = bm.chooseVictim()
 		bm.flushPage(frame_idx)
 	}
@@ -155,14 +155,8 @@ func (bm *BufferManager) setPage(frame_idx int, pid int, page *model.Page) {
 
 func (bm *BufferManager) chooseVictim() (int, bool) {
 	// TODO: use some algorithm (i.g. LRU, FIFO, ...)
-	/*for i := 0; i < BufferPoolSize; i++ {
-		if bm.bufferpool[i].PinCount() == 0 {
-			return i, true
-		}
-	}
-	return -1, false*/
-	return 0, true
 	//return rand.Intn(BufferPoolSize), true
+	return 0, true
 }
 
 func (bm *BufferManager) flushPage(frame_idx int) error {
@@ -182,7 +176,7 @@ func (bm *BufferManager) flushPage(frame_idx int) error {
 	bm.dm.Write(int(page.Pid()), buf.Bytes())
 
 	// Clean the buffer.
-	bm.bufferpool[frame_idx].DeletePage()
+	//bm.bufferpool[frame_idx].DeletePage()
 	delete(bm.dict, int(page.Pid()))
 
 	return nil
