@@ -2,9 +2,12 @@
 package main
 
 import (
+	//"bytes"
+	"encoding/binary"
 	"fmt"
+	"reflect"
 	
-	"github.com/inazo1115/toydb/lib/storage"
+	//"github.com/inazo1115/toydb/lib/storage"
 	"github.com/inazo1115/toydb/lib/storage/model"
 )
 
@@ -13,6 +16,57 @@ func log(msg interface{}) {
 }
 
 func main() {
+	log("start")
+
+	page := model.NewPage(100)
+
+	log("*")
+	log(binary.Size(page))
+
+	//buf := new(bytes.Buffer)
+	//buf := new(bytes.Buffer)
+	//err := binary.Write(buf, binary.LittleEndian, page)
+	buf, err := page.MarshalBinary()
+	if err != nil {
+		log(err)
+	}
+	fmt.Printf("% x", buf)
+
+	log("")
+	log("=============")
+
+	page0 := &model.Page{}
+	
+	//reader := bytes.NewReader(buf.Bytes())
+
+	//v := reflect.Indirect(reflect.ValueOf(page0))
+	log("^^")
+	//log(reflect.ValueOf(page0))
+	//log(reflect.TypeOf(reflect.ValueOf(page0)))
+	log(reflect.ValueOf(page0).Kind())
+	log(reflect.ValueOf(page0).Elem())
+	//log(intDestSize(page0))
+
+	page0.UnmarshalBinary(buf)
+	//err = binary.Read(reader, binary.LittleEndian, page0)
+	//if err != nil {
+	//log(err)
+//}
+	log(page0)
+	log(page0.Pid())
+}
+
+
+
+
+
+
+
+
+
+
+
+/*func main() {
 	pa := storage.NewPageAccessor()
 	bm := storage.NewBufferManager()
 
@@ -36,7 +90,7 @@ func main() {
 	pa.WriteBackAll()
 
 	bm.Dump()
-}
+}*/
 
 
 /*func main() {
