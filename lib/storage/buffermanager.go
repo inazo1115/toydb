@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	//"github.com/inazo1115/toydb/lib/pkg"
-	"github.com/inazo1115/toydb/lib/storage/model"
+	"github.com/inazo1115/toydb/lib/page"
 	"github.com/inazo1115/toydb/lib/util/datautil"
 )
 
@@ -20,7 +19,7 @@ const BufferPoolSize = 1
 // on memory. If not, BufferManager will fetche the byte data from the disk
 // storage.
 type BufferManager struct {
-	bufferpool [BufferPoolSize]*model.Frame
+	bufferpool [BufferPoolSize]*Frame
 	dict       map[int]int // pid -> frame_idx
 	dm         *DiskManager
 }
@@ -28,9 +27,9 @@ type BufferManager struct {
 // NewBufferManager creates a BufferManager object with preparing frames.
 func NewBufferManager() *BufferManager {
 
-	var bufferpool [BufferPoolSize]*model.Frame
+	var bufferpool [BufferPoolSize]*Frame
 	for i := 0; i < BufferPoolSize; i++ {
-		bufferpool[i] = model.NewFrame(nil)
+		bufferpool[i] = NewFrame(nil)
 	}
 
 	return &BufferManager{bufferpool, make(map[int]int, BufferPoolSize),
@@ -38,11 +37,12 @@ func NewBufferManager() *BufferManager {
 }
 
 // Read reads a page from buffer or disk.
-func (bm *BufferManager) Read(pid int) (*model.Page, error) {
+func (bm *BufferManager) Read(pid int, page *page.DataPage) error {
 
 	// Return the page from the cache.
 	if frame_idx, ok := bm.hitPage(pid); ok {
-		return bm.bufferpool[frame_idx].Page(), nil
+		page = bm.bufferpool[frame_idx].Page()
+		return nil
 	}
 
 	// Choose the frame which will be set the page.
@@ -55,39 +55,34 @@ func (bm *BufferManager) Read(pid int) (*model.Page, error) {
 	// Fetch the byte data from the disk storage.
 	size, err := bm.dm.GetBufferSize(int64(pid))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	buf := make([]byte, size)
 	err = bm.dm.Read(pid, buf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Deserialize from byte data to a page struct.
 	dec := gob.NewDecoder(bytes.NewBuffer(buf))
-	var page model.Page
-	err = dec.Decode(&page)
+	err = dec.Decode(page)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Set the page to the buffer.
-	bm.setPage(frame_idx, pid, &page)
+	bm.setPage(frame_idx, pid, page)
 
-	return &page, nil
+	return nil
 }
 
-func (bm *BufferManager) Update(pid int, page *model.Page) error {
+func (bm *BufferManager) Update(pid int, page *page.DataPage) error {
 
-	// When the page isn't on the cache.
-	if _, ok := bm.hitPage(pid); !ok {
-		_, err := bm.Read(pid)
-		if err != nil {
-			return err
-		}
+	frame_idx, ok := bm.hitPage(pid)
+	if !ok {
+		frame_idx, _ = bm.chooseVictim()
+		bm.WriteBack(frame_idx)
 	}
-
-	frame_idx := bm.dict[pid]
 
 	if bm.bufferpool[frame_idx].PinCount() == 0 {
 		bm.bufferpool[frame_idx].SetPage(page)
@@ -100,7 +95,7 @@ func (bm *BufferManager) Update(pid int, page *model.Page) error {
 	return nil
 }
 
-func (bm *BufferManager) Create(page *model.Page) (int, error) {
+func (bm *BufferManager) Create(page *page.DataPage) (int, error) {
 
 	// Get an available free page id.
 	pid, err := bm.dm.GetFreePageID(datautil.Keys(bm.dict))
@@ -177,7 +172,7 @@ func (bm *BufferManager) getFreeBuffer() (int, bool) {
 	return -1, false
 }
 
-func (bm *BufferManager) setPage(frame_idx int, pid int, page *model.Page) {
+func (bm *BufferManager) setPage(frame_idx int, pid int, page *page.DataPage) {
 	bm.bufferpool[frame_idx].SetPage(page)
 	bm.dict[pid] = frame_idx
 }

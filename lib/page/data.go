@@ -1,4 +1,4 @@
-package model
+package page
 
 import (
 	"bytes"
@@ -15,52 +15,47 @@ const StructMetaInfoSize = 16
 const Int64Size = 8
 const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + (Int64Size * 4))
 
-type Page struct {
+type DataPage struct {
 	pid        int64
 	previous   int64
 	next       int64
 	numRecords int64
-	// TODO: add schema etc.
-	data []byte
+	data       []byte
 }
 
-func getDataSize() int {
-	return int(math.Floor(float64(FreeSpaceSize/RecordSize))) * RecordSize
+func NewDataPage(pid int64, previous int64, next int64) *DataPage {
+	return &DataPage{pid, previous, next, 0, make([]byte, getDataSize())}
 }
 
-func NewPage(pid int64, previous int64, next int64) *Page {
-	return &Page{pid, previous, next, 0, make([]byte, getDataSize())}
-}
-
-func (p *Page) Pid() int64 {
+func (p *DataPage) Pid() int64 {
 	return p.pid
 }
 
-func (p *Page) SetPid(pid int64) {
+func (p *DataPage) SetPid(pid int64) {
 	p.pid = pid
 }
 
-func (p *Page) Previous() int64 {
+func (p *DataPage) Previous() int64 {
 	return p.previous
 }
 
-func (p *Page) SetPrevious(page int64) {
+func (p *DataPage) SetPrevious(page int64) {
 	p.previous = page
 }
 
-func (p *Page) Next() int64 {
+func (p *DataPage) Next() int64 {
 	return p.next
 }
 
-func (p *Page) SetNext(page int64) {
+func (p *DataPage) SetNext(page int64) {
 	p.next = page
 }
 
-func (p *Page) NumRecords() int64 {
+func (p *DataPage) NumRecords() int64 {
 	return p.numRecords
 }
 
-func (p *Page) AddRecord(r []byte) error {
+func (p *DataPage) AddRecord(r []byte) error {
 
 	if len(r) > RecordSize {
 		return errors.New("record size is too big")
@@ -79,11 +74,11 @@ func (p *Page) AddRecord(r []byte) error {
 	return nil
 }
 
-func (p *Page) Data() []byte {
+func (p *DataPage) Data() []byte {
 	return p.data
 }
 
-func (p *Page) MarshalBinary() (data []byte, err error) {
+func (p *DataPage) MarshalBinary() (data []byte, err error) {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, p.pid)
 	_ = binary.Write(buf, binary.LittleEndian, p.previous)
@@ -93,7 +88,7 @@ func (p *Page) MarshalBinary() (data []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func (p *Page) UnmarshalBinary(data []byte) error {
+func (p *DataPage) UnmarshalBinary(data []byte) error {
 	buf := new(bytes.Buffer)
 	buf.Write(data)
 
@@ -117,4 +112,8 @@ func (p *Page) UnmarshalBinary(data []byte) error {
 	p.data = tmp
 
 	return nil
+}
+
+func getDataSize() int {
+	return int(math.Floor(float64(FreeSpaceSize/RecordSize))) * RecordSize
 }

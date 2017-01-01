@@ -4,8 +4,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/inazo1115/toydb/lib/page"
 	"github.com/inazo1115/toydb/lib/storage"
-	"github.com/inazo1115/toydb/lib/storage/model"
 )
 
 func log(msg interface{}) {
@@ -15,52 +15,53 @@ func log(msg interface{}) {
 func main() {
 	log("start")
 
-	pa := storage.NewPageAccessor()
+	ba := storage.NewBufferManager()
 
-	page := model.NewPage(-1, -1, -1)
-	page.AddRecord([]byte("0-0"))
-	page.AddRecord([]byte("0-1"))
-	page.AddRecord([]byte("0-2"))
-	_, err := pa.Create(page)
-	if err != nil {
-		panic(err)
-	}
-
-	page = model.NewPage(-1, -1, -1)
-	page.AddRecord([]byte("1-0"))
-	page.AddRecord([]byte("1-1"))
-	page.AddRecord([]byte("1-2"))
-	_, err = pa.Create(page)
+	p := page.NewDataPage(-1, -1, -1)
+	p.AddRecord([]byte("0-0"))
+	p.AddRecord([]byte("0-1"))
+	p.AddRecord([]byte("0-2"))
+	_, err := ba.Create(p)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = pa.Read(1)
-	if err != nil {
-		panic(err)
-	}
-	_, err = pa.Read(0)
-	if err != nil {
-		panic(err)
-	}
-	_, err = pa.Read(1)
-	if err != nil {
-		panic(err)
-	}
-	_, err = pa.Read(0)
-	if err != nil {
-		panic(err)
-	}
-	_, err = pa.Read(1)
+	p = page.NewDataPage(-1, -1, -1)
+	p.AddRecord([]byte("1-0"))
+	p.AddRecord([]byte("1-1"))
+	p.AddRecord([]byte("1-2"))
+	_, err = ba.Create(p)
 	if err != nil {
 		panic(err)
 	}
 
-	ppp, _ := pa.Read(0)
-	log(string(ppp.Data()))
+	pp := &page.DataPage{}
+	err = ba.Read(1, pp)
+	if err != nil {
+		panic(err)
+	}
+	err = ba.Read(0, pp)
+	if err != nil {
+		panic(err)
+	}
+	err = ba.Read(1, pp)
+	if err != nil {
+		panic(err)
+	}
+	err = ba.Read(0, pp)
+	if err != nil {
+		panic(err)
+	}
+	err = ba.Read(1, pp)
+	if err != nil {
+		panic(err)
+	}
 
-	ppp, _ = pa.Read(1)
-	log(string(ppp.Data()))
+	ba.Read(0, pp)
+	log(string(pp.Data()))
 
-	pa.WriteBackAll()
+	ba.Read(1, pp)
+	log(string(pp.Data()))
+
+	ba.WriteBackAll()
 }

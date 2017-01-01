@@ -1,20 +1,24 @@
-package model
+package storage
+
+import (
+	"github.com/inazo1115/toydb/lib/page"
+)
 
 type Frame struct {
-	page     *Page
+	page     *page.DataPage
 	pinCount int
 	dirty    bool
 }
 
-func NewFrame(p *Page) *Frame {
+func NewFrame(p *page.DataPage) *Frame {
 	return &Frame{p, 0, false}
 }
 
-func (f *Frame) Page() *Page {
+func (f *Frame) Page() *page.DataPage {
 	return f.page
 }
 
-func (f *Frame) SetPage(p *Page) {
+func (f *Frame) SetPage(p *page.DataPage) {
 	f.page = p
 }
 
