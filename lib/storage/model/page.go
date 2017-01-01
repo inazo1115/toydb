@@ -3,7 +3,6 @@ package model
 import (
 	"bytes"
 	"encoding/binary"
-	//"fmt"
 	"errors"
 	"math"
 
@@ -11,7 +10,7 @@ import (
 )
 
 // tmp
-const recordSize = 24 // 8 * 3
+const RecordSize = 24 // 8 * 3
 const StructMetaInfoSize = 16
 const Int64Size = 8
 const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + (Int64Size * 4))
@@ -25,10 +24,12 @@ type Page struct {
 	data []byte
 }
 
+func getDataSize() int {
+	return int(math.Floor(float64(FreeSpaceSize/RecordSize))) * RecordSize
+}
+
 func NewPage(pid int64, previous int64, next int64) *Page {
-	maxNumRecords := int(math.Floor(float64(FreeSpaceSize / recordSize)))
-	size := maxNumRecords * recordSize
-	return &Page{pid, previous, next, 0, make([]byte, size)}
+	return &Page{pid, previous, next, 0, make([]byte, getDataSize())}
 }
 
 func (p *Page) Pid() int64 {
@@ -61,15 +62,15 @@ func (p *Page) NumRecords() int64 {
 
 func (p *Page) AddRecord(r []byte) error {
 
-	if len(r) > recordSize {
+	if len(r) > RecordSize {
 		return errors.New("record size is too big")
 	}
 
-	for i := 0; i < recordSize; i++ {
+	for i := 0; i < RecordSize; i++ {
 		if i >= len(r) {
-			p.data[int(p.numRecords)*recordSize+i] = 0
+			p.data[int(p.numRecords)*RecordSize+i] = 0
 		} else {
-			p.data[int(p.numRecords)*recordSize+i] = r[i]
+			p.data[int(p.numRecords)*RecordSize+i] = r[i]
 		}
 	}
 
@@ -84,6 +85,7 @@ func (p *Page) Data() []byte {
 
 func (p *Page) MarshalBinary() (data []byte, err error) {
 	buf := new(bytes.Buffer)
+	_ = binary.Write(buf, binary.LittleEndian, p.pid)
 	_ = binary.Write(buf, binary.LittleEndian, p.previous)
 	_ = binary.Write(buf, binary.LittleEndian, p.next)
 	_ = binary.Write(buf, binary.LittleEndian, p.numRecords)
@@ -92,10 +94,12 @@ func (p *Page) MarshalBinary() (data []byte, err error) {
 }
 
 func (p *Page) UnmarshalBinary(data []byte) error {
-
 	buf := new(bytes.Buffer)
 	buf.Write(data)
 
+	if err := binary.Read(buf, binary.LittleEndian, &p.pid); err != nil {
+		return err
+	}
 	if err := binary.Read(buf, binary.LittleEndian, &p.previous); err != nil {
 		return err
 	}
@@ -106,7 +110,7 @@ func (p *Page) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	tmp := make([]byte, p.numRecords*recordSize)
+	tmp := make([]byte, getDataSize())
 	if err := binary.Read(buf, binary.LittleEndian, &tmp); err != nil {
 		return err
 	}

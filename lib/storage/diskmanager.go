@@ -1,7 +1,6 @@
 package storage
 
 import (
-	//"errors"
 	"fmt"
 	"math"
 	"os"
@@ -20,14 +19,14 @@ func NewDiskManager() *DiskManager {
 }
 
 // Read reads a byte block from a file and packs it into given buffer.
-func (dm *DiskManager) Read(pid int, buffer []byte) error {
+func (dm *DiskManager) Read(pid int, buf []byte) error {
 
 	file, err := dm.getFile()
 	if err != nil {
 		return err
 	}
 
-	_, err = file.ReadAt(buffer, int64(pid*pkg.BlockSize))
+	_, err = file.ReadAt(buf, int64(pid*pkg.BlockSize))
 	if err != nil {
 		return err
 	}
@@ -78,7 +77,26 @@ func (dm *DiskManager) GetFreePageID(used []int) (int, error) {
 		}
 	}
 
-	return int(math.Max(float64(min), float64(max + 1))), nil
+	return int(math.Max(float64(min), float64(max+1))), nil
+}
+
+// GetBufferSize returns a buffer size which is needed to obtain page.
+func (dm *DiskManager) GetBufferSize(pid int64) (int, error) {
+
+	file, err := dm.getFile()
+	if err != nil {
+		return -1, err
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return -1, err
+	}
+
+	if info.Size() < pkg.BlockSize*(pid+1) {
+		return int(info.Size() - (pkg.BlockSize * pid)), nil
+	}
+	return pkg.BlockSize, nil
 }
 
 // Dump dumps bytes of specified block. It's for debug.
@@ -89,13 +107,13 @@ func (dm *DiskManager) Dump(pid int) {
 		panic(err)
 	}
 
-	buffer := make([]byte, pkg.BlockSize)
-	_, err = file.ReadAt(buffer, int64(pid*pkg.BlockSize))
+	buf := make([]byte, pkg.BlockSize)
+	_, err = file.ReadAt(buf, int64(pid*pkg.BlockSize))
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(buffer)
+	fmt.Println(buf)
 }
 
 // getFile returns pointer to file.

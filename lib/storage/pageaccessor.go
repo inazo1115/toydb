@@ -42,3 +42,8 @@ func (pa *PageAccessor) Delete(pid int) error {
 func (pa *PageAccessor) WriteBackAll() error {
 	return pa.bm.WriteBackAll()
 }
+
+// Dump shows the inner information. it's for debug.
+func (pa *PageAccessor) Dump() {
+	pa.bm.Dump()
+}

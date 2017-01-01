@@ -6,42 +6,42 @@ type Frame struct {
 	dirty    bool
 }
 
-func NewFrame(page *Page) *Frame {
-	return &Frame{page, 0, false}
+func NewFrame(p *Page) *Frame {
+	return &Frame{p, 0, false}
 }
 
-func (frame *Frame) Page() *Page {
-	return frame.page
+func (f *Frame) Page() *Page {
+	return f.page
 }
 
-func (frame *Frame) SetPage(page *Page) {
-	frame.page = page
+func (f *Frame) SetPage(p *Page) {
+	f.page = p
 }
 
-func(frame *Frame) DeletePage() {
-	frame.page = nil
+func (f *Frame) DeletePage() {
+	f.page = nil
 }
 
-func (frame *Frame) PinCount() int {
-	return frame.pinCount
+func (f *Frame) PinCount() int {
+	return f.pinCount
 }
 
-func (frame *Frame) IncPinCount() {
-	frame.pinCount += 1
+func (f *Frame) IncPinCount() {
+	f.pinCount += 1
 }
 
-func (frame *Frame) DecPinCount() {
-	frame.pinCount -= 1
+func (f *Frame) DecPinCount() {
+	f.pinCount -= 1
 }
 
-func (frame *Frame) Dirty() bool {
-	return frame.dirty
+func (f *Frame) Dirty() bool {
+	return f.dirty
 }
 
-func (frame *Frame) TurnOnDirty() {
-	frame.dirty = true
+func (f *Frame) TurnOnDirty() {
+	f.dirty = true
 }
 
-func (frame *Frame) TurnOffDirty() {
-	frame.dirty = false
+func (f *Frame) TurnOffDirty() {
+	f.dirty = false
 }

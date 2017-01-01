@@ -5,15 +5,15 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	//"math/rand"
+	"math/rand"
 
-	"github.com/inazo1115/toydb/lib/pkg"
+	//"github.com/inazo1115/toydb/lib/pkg"
 	"github.com/inazo1115/toydb/lib/storage/model"
 	"github.com/inazo1115/toydb/lib/util/datautil"
 )
 
 // BufferPoolSize is the size of BufferPool.
-const BufferPoolSize = 3
+const BufferPoolSize = 1
 
 // BufferManager manages resources of the main memory and behaves as the cache
 // of disk storage. If the page data is in buffer, BufferManager treats it
@@ -25,6 +25,7 @@ type BufferManager struct {
 	dm         *DiskManager
 }
 
+// NewBufferManager creates a BufferManager object with preparing frames.
 func NewBufferManager() *BufferManager {
 
 	var bufferpool [BufferPoolSize]*model.Frame
@@ -36,6 +37,7 @@ func NewBufferManager() *BufferManager {
 		NewDiskManager()}
 }
 
+// Read reads a page from buffer or disk.
 func (bm *BufferManager) Read(pid int) (*model.Page, error) {
 
 	// Return the page from the cache.
@@ -47,12 +49,16 @@ func (bm *BufferManager) Read(pid int) (*model.Page, error) {
 	frame_idx, ok := bm.getFreeBuffer()
 	if !ok {
 		frame_idx, _ = bm.chooseVictim()
-		bm.flushPage(frame_idx)
+		bm.WriteBack(frame_idx)
 	}
 
 	// Fetch the byte data from the disk storage.
-	buf := make([]byte, pkg.BlockSize)
-	err := bm.dm.Read(pid, buf)
+	size, err := bm.dm.GetBufferSize(int64(pid))
+	if err != nil {
+		return nil, err
+	}
+	buf := make([]byte, size)
+	err = bm.dm.Read(pid, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +70,8 @@ func (bm *BufferManager) Read(pid int) (*model.Page, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Set the page to the buffer.
 	bm.setPage(frame_idx, pid, &page)
 
 	return &page, nil
@@ -94,31 +102,52 @@ func (bm *BufferManager) Update(pid int, page *model.Page) error {
 
 func (bm *BufferManager) Create(page *model.Page) (int, error) {
 
-	// TODO: remove this
-	//bm.WriteBackAll()
-
+	// Get an available free page id.
 	pid, err := bm.dm.GetFreePageID(datautil.Keys(bm.dict))
 	if err != nil {
 		return -1, err
 	}
 
-	var frame_idx int
-
+	// Choose the frame which will be set the page.
 	frame_idx, ok := bm.getFreeBuffer()
 	if !ok {
 		frame_idx, _ = bm.chooseVictim()
-		bm.flushPage(frame_idx)
+		bm.WriteBack(frame_idx)
 	}
 
+	// Set the new page to the frame.
 	page.SetPid(int64(pid))
 	bm.setPage(frame_idx, pid, page)
 
 	return pid, nil
 }
 
+func (bm *BufferManager) WriteBack(frame_idx int) error {
+
+	// Get and delete the target page.
+	page := bm.bufferpool[frame_idx].Page()
+
+	// Do seriarize.
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(page)
+	if err != nil {
+		return err
+	}
+
+	// Write back the page to disk storage.
+	bm.dm.Write(int(page.Pid()), buf.Bytes())
+
+	// Clean the buffer.
+	bm.bufferpool[frame_idx].DeletePage()
+	delete(bm.dict, int(page.Pid()))
+
+	return nil
+}
+
 func (bm *BufferManager) WriteBackAll() error {
 	for _, frame_idx := range bm.dict {
-		err := bm.flushPage(frame_idx)
+		err := bm.WriteBack(frame_idx)
 		if err != nil {
 			return err
 		}
@@ -155,38 +184,10 @@ func (bm *BufferManager) setPage(frame_idx int, pid int, page *model.Page) {
 
 func (bm *BufferManager) chooseVictim() (int, bool) {
 	// TODO: use some algorithm (i.g. LRU, FIFO, ...)
-	//return rand.Intn(BufferPoolSize), true
-	return 0, true
-}
-
-func (bm *BufferManager) flushPage(frame_idx int) error {
-
-	// Get and delete the target page.
-	page := bm.bufferpool[frame_idx].Page()
-
-	// Do seriarize.
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(page)
-	if err != nil {
-		return err
-	}
-
-	// Write back the page to disk storage.
-	bm.dm.Write(int(page.Pid()), buf.Bytes())
-
-	// Clean the buffer.
-	//bm.bufferpool[frame_idx].DeletePage()
-	delete(bm.dict, int(page.Pid()))
-
-	return nil
+	return rand.Intn(BufferPoolSize), true
 }
 
 func (bm *BufferManager) Dump() {
-	fmt.Printf("bufferpool: %s\n", bm.bufferpool)
-	fmt.Printf("dict: %s\n", bm.dict)
-}
-
-func log(msg interface{}) {
-	fmt.Println(msg)
+	fmt.Println(bm.bufferpool[0])
+	fmt.Println(bm.dict)
 }
