@@ -37,12 +37,12 @@ func NewBufferManager() *BufferManager {
 }
 
 // Read reads a page from buffer or disk.
-func (bm *BufferManager) Read(pid int, page *page.DataPage) error {
+func (bm *BufferManager) Read(pid int, page *page.DataPage) (*page.DataPage, error) {
 
 	// Return the page from the cache.
 	if frame_idx, ok := bm.hitPage(pid); ok {
-		page = bm.bufferpool[frame_idx].Page()
-		return nil
+		p := bm.bufferpool[frame_idx].Page()
+		return p, nil
 	}
 
 	// Choose the frame which will be set the page.
@@ -55,25 +55,25 @@ func (bm *BufferManager) Read(pid int, page *page.DataPage) error {
 	// Fetch the byte data from the disk storage.
 	size, err := bm.dm.GetBufferSize(int64(pid))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	buf := make([]byte, size)
 	err = bm.dm.Read(pid, buf)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Deserialize from byte data to a page struct.
 	dec := gob.NewDecoder(bytes.NewBuffer(buf))
 	err = dec.Decode(page)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Set the page to the buffer.
 	bm.setPage(frame_idx, pid, page)
 
-	return nil
+	return page, nil
 }
 
 func (bm *BufferManager) Update(pid int, page *page.DataPage) error {
@@ -95,7 +95,7 @@ func (bm *BufferManager) Update(pid int, page *page.DataPage) error {
 	return nil
 }
 
-func (bm *BufferManager) Create(page *page.DataPage) (int, error) {
+func (bm *BufferManager) Create(p *page.DataPage) (int, error) {
 
 	// Get an available free page id.
 	pid, err := bm.dm.GetFreePageID(datautil.Keys(bm.dict))
@@ -111,8 +111,8 @@ func (bm *BufferManager) Create(page *page.DataPage) (int, error) {
 	}
 
 	// Set the new page to the frame.
-	page.SetPid(int64(pid))
-	bm.setPage(frame_idx, pid, page)
+	p.SetPid(int64(pid))
+	bm.setPage(frame_idx, pid, p)
 
 	return pid, nil
 }
@@ -121,6 +121,9 @@ func (bm *BufferManager) WriteBack(frame_idx int) error {
 
 	// Get and delete the target page.
 	page := bm.bufferpool[frame_idx].Page()
+
+	fmt.Println("aa")
+	fmt.Println(page)
 
 	// Do seriarize.
 	var buf bytes.Buffer

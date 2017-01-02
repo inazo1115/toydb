@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	//"fmt"
 	"math"
 
 	"github.com/inazo1115/toydb/lib/pkg"
@@ -55,6 +56,15 @@ func (p *DataPage) NumRecords() int64 {
 	return p.numRecords
 }
 
+func (p *DataPage) HasFreeSpace() bool {
+	//return (FreeSpaceSize - p.numRecords*RecordSize) >= RecordSize
+	return p.numRecords <= 5
+}
+
+func (p *DataPage) Data() []byte {
+	return p.data
+}
+
 func (p *DataPage) AddRecord(r []byte) error {
 
 	if len(r) > RecordSize {
@@ -74,8 +84,9 @@ func (p *DataPage) AddRecord(r []byte) error {
 	return nil
 }
 
-func (p *DataPage) Data() []byte {
-	return p.data
+func (p *DataPage) ReadRecord(idx int) []byte {
+	off := int64(idx * RecordSize)
+	return p.data[off:(off + RecordSize)]
 }
 
 func (p *DataPage) MarshalBinary() (data []byte, err error) {
