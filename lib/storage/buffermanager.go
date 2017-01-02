@@ -36,12 +36,14 @@ func NewBufferManager() *BufferManager {
 		NewDiskManager()}
 }
 
-// Read reads a page from buffer or disk.
-func (bm *BufferManager) Read(pid int64, page *page.DataPage) (*page.DataPage, error) {
+// Read reads a page from buffer or disk. The return value is set in given page
+// pointer.
+func (bm *BufferManager) Read(pid int64, p *page.DataPage) error {
 
-	// Return the page from the cache.
+	// The required page is on the cache.
 	if fidx, ok := bm.hitPage(pid); ok {
-		return bm.bufferpool[fidx].Page(), nil
+		*p = *bm.bufferpool[fidx].Page()
+		return nil
 	}
 
 	// Choose the frame which will be set the page.
@@ -54,30 +56,30 @@ func (bm *BufferManager) Read(pid int64, page *page.DataPage) (*page.DataPage, e
 	// Fetch the byte data from the disk storage.
 	size, err := bm.dm.GetBufferSize(pid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	buf := make([]byte, size)
 	err = bm.dm.Read(pid, buf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Deserialize from byte data to a page struct.
 	dec := gob.NewDecoder(bytes.NewBuffer(buf))
-	err = dec.Decode(page)
+	err = dec.Decode(p)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Set the page to the buffer.
-	bm.bufferpool[fidx].SetPage(page)
+	bm.bufferpool[fidx].SetPage(p)
 	bm.dict[pid] = fidx
 
-	return page, nil
+	return nil
 }
 
 // Update updates the page which has the page id with the given page.
-func (bm *BufferManager) Update(pid int64, page *page.DataPage) error {
+func (bm *BufferManager) Update(pid int64, p *page.DataPage) error {
 
 	// Choose the frame which will be set the page.
 	fidx, ok := bm.hitPage(pid)
@@ -88,7 +90,7 @@ func (bm *BufferManager) Update(pid int64, page *page.DataPage) error {
 
 	// Set the page while considering about the transaction.
 	if bm.bufferpool[fidx].PinCount() == 0 {
-		bm.bufferpool[fidx].SetPage(page)
+		bm.bufferpool[fidx].SetPage(p)
 		bm.bufferpool[fidx].TurnOnDirty()
 		return nil
 	} else {
@@ -100,7 +102,7 @@ func (bm *BufferManager) Update(pid int64, page *page.DataPage) error {
 }
 
 // Create appends the page to the disk and returns the new page id.
-func (bm *BufferManager) Create(page *page.DataPage) (int64, error) {
+func (bm *BufferManager) Create(p *page.DataPage) (int64, error) {
 
 	// Get an available free page id.
 	pid, err := bm.dm.GetFreePageID(util.Keys(bm.dict))
@@ -116,8 +118,8 @@ func (bm *BufferManager) Create(page *page.DataPage) (int64, error) {
 	}
 
 	// Set the new page to the frame.
-	page.SetPid(pid)
-	bm.bufferpool[fidx].SetPage(page)
+	p.SetPid(pid)
+	bm.bufferpool[fidx].SetPage(p)
 	bm.bufferpool[fidx].TurnOnDirty()
 	bm.dict[pid] = fidx
 
@@ -129,11 +131,11 @@ func (bm *BufferManager) Create(page *page.DataPage) (int64, error) {
 func (bm *BufferManager) WriteBack(fidx int64) error {
 
 	// Get the target page.
-	page := bm.bufferpool[fidx].Page()
+	p := bm.bufferpool[fidx].Page()
 
 	// Clean the buffer.
 	bm.bufferpool[fidx].DeletePage()
-	delete(bm.dict, page.Pid())
+	delete(bm.dict, p.Pid())
 
 	// Non dirty page doesn't need to be written back.
 	if !bm.bufferpool[fidx].Dirty() {
@@ -145,13 +147,13 @@ func (bm *BufferManager) WriteBack(fidx int64) error {
 	// Do seriarize.
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(page)
+	err := enc.Encode(p)
 	if err != nil {
 		return err
 	}
 
 	// Write the page back to the disk storage.
-	err = bm.dm.Write(page.Pid(), buf.Bytes())
+	err = bm.dm.Write(p.Pid(), buf.Bytes())
 	if err != nil {
 		return err
 	}

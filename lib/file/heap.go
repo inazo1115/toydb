@@ -8,38 +8,35 @@ import (
 	"github.com/inazo1115/toydb/lib/storage"
 )
 
+// HeapFile is the representation of the file and access methods. HeapFile is
+// the linked list of pages.
 type HeapFile struct {
 	bm *storage.BufferManager
 }
 
+// NewHeapFile creates HeapFile struct and returns it's pointer.
 func NewHeapFile() *HeapFile {
 	return &HeapFile{storage.NewBufferManager()}
 }
 
-// tmp
-func deserializeRecord(b []byte) string {
-	return string(b)
-}
+// Scan scans all records. The traversing begins from given page id.
+func (f *HeapFile) Scan(pid int64) ([]string, error) {
 
-func serializeRecord(s string) []byte {
-	return []byte(s)
-}
-
-//func Scan(rootPid int64) []*page.Record {
-func (f *HeapFile) Scan(pid int64) (*[]string, error) {
-
+	// Prepare the result variable.
 	ret := make([]string, 0)
 
+	// Traverse the linked list of pages.
 	p := &page.DataPage{}
 	next := pid
-
 	for next != -1 {
 
-		p, err := f.bm.Read(next, p)
+		// Read the page.
+		err := f.bm.Read(next, p)
 		if err != nil {
 			return nil, err
 		}
 
+		// Read records.
 		for i := 0; i < int(p.NumRecords()); i++ {
 			rec := deserializeRecord(p.ReadRecord(i))
 			ret = append(ret, rec)
@@ -48,15 +45,15 @@ func (f *HeapFile) Scan(pid int64) (*[]string, error) {
 		next = p.Next()
 	}
 
-	return &ret, nil
+	return ret, nil
 }
 
+// Insert inserts a record into the page.
 func (f *HeapFile) Insert(pid int64, record string) error {
 
 	p := &page.DataPage{}
 
-	var err error
-	p, err = f.bm.Read(pid, p)
+	err := f.bm.Read(pid, p)
 	if err != nil {
 		return err
 	}
@@ -68,22 +65,20 @@ func (f *HeapFile) Insert(pid int64, record string) error {
 		return nil
 	}
 
-	// Try to insert the record into the next page.
+	// Follow the link to the next page.
 	if p.Next() != -1 {
 		return f.Insert(p.Next(), record)
 	}
 
-	// Insert the record into the new page.
+	// Create the new page and insert the record into it.
 	newPage := page.NewDataPage(-1, p.Pid(), -1)
 	newPage.AddRecord(serializeRecord(record))
 	newPid, err := f.bm.Create(newPage)
 	if err != nil {
 		return err
 	}
-
-	// Set the pointer to the next page.
-	p, err = f.bm.Read(p.Pid(), p)
-	if err != nil {
+	// Set the link to the next page.
+	if err = f.bm.Read(p.Pid(), p); err != nil {
 		return err
 	}
 	p.SetNext(newPid)
@@ -92,12 +87,13 @@ func (f *HeapFile) Insert(pid int64, record string) error {
 	return nil
 }
 
+// Dump is a debug function.
 func (f *HeapFile) Dump(pid int64) {
 
 	p := &page.DataPage{}
 
 	var err error
-	p, err = f.bm.Read(pid, p)
+	err = f.bm.Read(pid, p)
 	if err != nil {
 		panic(err)
 	}
@@ -125,4 +121,14 @@ func (f *HeapFile) WriteBackAll() error {
 		return err
 	}
 	return nil
+}
+
+// tmp
+func deserializeRecord(b []byte) string {
+	return string(b)
+}
+
+// tmp
+func serializeRecord(s string) []byte {
+	return []byte(s)
 }

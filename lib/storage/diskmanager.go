@@ -109,7 +109,7 @@ func (dm *DiskManager) Dump(pid int64) {
 	}
 
 	buf := make([]byte, pkg.BlockSize)
-	_, err = file.ReadAt(buf, int64(pid*pkg.BlockSize))
+	_, err = file.ReadAt(buf, pid*pkg.BlockSize)
 	if err != nil {
 		panic(err)
 	}
@@ -124,12 +124,6 @@ func (dm *DiskManager) getFile() (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	/*defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
-		}
-	}()*/
 
 	return file, nil
 }

@@ -30,7 +30,7 @@ func main() {
 	h := file.NewHeapFile()
 
 	// Insert
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 3000; i++ {
 		s := fmt.Sprintf("foofoofoo%d", i)
 		err = h.Insert(int64(rootPid), s)
 		if err != nil {
