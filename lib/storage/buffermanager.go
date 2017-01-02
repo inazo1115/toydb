@@ -12,7 +12,7 @@ import (
 )
 
 // BufferPoolSize is the size of BufferPool.
-const BufferPoolSize = 1
+const BufferPoolSize = 3
 
 // BufferManager manages resources of the main memory and behaves as the cache
 // of disk storage. If the page data is in buffer, BufferManager treats it
@@ -122,9 +122,6 @@ func (bm *BufferManager) WriteBack(frame_idx int) error {
 	// Get and delete the target page.
 	page := bm.bufferpool[frame_idx].Page()
 
-	fmt.Println("aa")
-	fmt.Println(page)
-
 	// Do seriarize.
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -186,6 +183,8 @@ func (bm *BufferManager) chooseVictim() (int, bool) {
 }
 
 func (bm *BufferManager) Dump() {
-	fmt.Println(bm.bufferpool[0])
+	for i := 0; i < len(bm.bufferpool); i++ {
+		fmt.Println(bm.bufferpool[i])
+	}
 	fmt.Println(bm.dict)
 }

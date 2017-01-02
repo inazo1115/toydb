@@ -57,8 +57,8 @@ func (p *DataPage) NumRecords() int64 {
 }
 
 func (p *DataPage) HasFreeSpace() bool {
-	//return (FreeSpaceSize - p.numRecords*RecordSize) >= RecordSize
-	return p.numRecords <= 5
+	return (FreeSpaceSize - p.numRecords*RecordSize) >= RecordSize
+	//return p.numRecords <= 5
 }
 
 func (p *DataPage) Data() []byte {

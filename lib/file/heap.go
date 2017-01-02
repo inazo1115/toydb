@@ -28,6 +28,8 @@ func serializeRecord(s string) []byte {
 //func Scan(rootPid int64) []*page.Record {
 func (f *HeapFile) Scan(rootPid int64) (*[]string, error) {
 
+	fmt.Println(rootPid)
+
 	ret := make([]string, 0)
 
 	p := &page.DataPage{}
@@ -53,9 +55,6 @@ func (f *HeapFile) Scan(rootPid int64) (*[]string, error) {
 
 func (f *HeapFile) Insert(rootPid int64, record string) error {
 
-	fmt.Println("insert")
-	//fmt.Println(rootPid)
-
 	p := &page.DataPage{}
 
 	var err error
@@ -70,20 +69,21 @@ func (f *HeapFile) Insert(rootPid int64, record string) error {
 		return nil
 	}
 
+	// Try to insert the record into the next page.
 	if p.Next() != -1 {
-		// Try to insert the record into the next page.
 		return f.Insert(p.Next(), record)
-	} else {
-		// Insert the record into the new page.
-		newPage := page.NewDataPage(-1, p.Pid(), -1)
-		newPage.AddRecord(serializeRecord(record))
-		newPid, err := f.bm.Create(newPage)
-		if err != nil {
-			return err
-		}
-		p.SetNext(int64(newPid))
-		return nil
 	}
+
+	// Insert the record into the new page.
+	newPage := page.NewDataPage(-1, p.Pid(), -1)
+	newPage.AddRecord(serializeRecord(record))
+	newPid, err := f.bm.Create(newPage)
+	if err != nil {
+		return err
+	}
+	p.SetNext(int64(newPid))
+
+	return nil
 }
 
 func (f *HeapFile) Dump(pid int64) {
@@ -111,4 +111,12 @@ func SearchRange(rootPid int64) error {
 
 func Delete(rootPid int64) error {
 	return errors.New("not implemented")
+}
+
+func (f *HeapFile) WriteBackAll() error {
+	err := f.bm.WriteBackAll()
+	if err != nil {
+		return err
+	}
+	return nil
 }
