@@ -59,15 +59,13 @@ func (bm *BufferManager) Read(pid int64, p *page.DataPage) error {
 		return err
 	}
 	buf := make([]byte, size)
-	err = bm.dm.Read(pid, buf)
-	if err != nil {
+	if err = bm.dm.Read(pid, buf); err != nil {
 		return err
 	}
 
 	// Deserialize from byte data to a page struct.
 	dec := gob.NewDecoder(bytes.NewBuffer(buf))
-	err = dec.Decode(p)
-	if err != nil {
+	if err = dec.Decode(p); err != nil {
 		return err
 	}
 
@@ -147,14 +145,12 @@ func (bm *BufferManager) WriteBack(fidx int64) error {
 	// Do seriarize.
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(p)
-	if err != nil {
+	if err := enc.Encode(p); err != nil {
 		return err
 	}
 
 	// Write the page back to the disk storage.
-	err = bm.dm.Write(p.Pid(), buf.Bytes())
-	if err != nil {
+	if err := bm.dm.Write(p.Pid(), buf.Bytes()); err != nil {
 		return err
 	}
 
@@ -167,8 +163,7 @@ func (bm *BufferManager) WriteBack(fidx int64) error {
 // WriteBackAll executes WriteBack process for all of pages on the cache.
 func (bm *BufferManager) WriteBackAll() error {
 	for _, fidx := range bm.dict {
-		err := bm.WriteBack(fidx)
-		if err != nil {
+		if err := bm.WriteBack(fidx); err != nil {
 			return err
 		}
 	}
