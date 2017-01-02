@@ -8,19 +8,19 @@ import (
 	"math/rand"
 
 	"github.com/inazo1115/toydb/lib/page"
-	"github.com/inazo1115/toydb/lib/util/datautil"
+	"github.com/inazo1115/toydb/lib/util"
 )
 
 // BufferPoolSize is the size of BufferPool.
 const BufferPoolSize = 3
 
-// BufferManager manages resources of the main memory and behaves as the cache
-// of disk storage. If the page data is in buffer, BufferManager treats it
-// on memory. If not, BufferManager will fetche the byte data from the disk
-// storage.
+// BufferManager manages resources of the main memory and behaves as cache of
+// disk storage. If the page data is in buffer, BufferManager treats it on
+// memory. If not, BufferManager will fetche the byte data from the disk
+// storage. Where pid is the 'page id' and fidx is the 'frame index'.
 type BufferManager struct {
 	bufferpool [BufferPoolSize]*Frame
-	dict       map[int]int // pid -> frame_idx
+	dict       map[int64]int64 // pid -> fidx
 	dm         *DiskManager
 }
 
@@ -32,28 +32,27 @@ func NewBufferManager() *BufferManager {
 		bufferpool[i] = NewFrame(nil)
 	}
 
-	return &BufferManager{bufferpool, make(map[int]int, BufferPoolSize),
+	return &BufferManager{bufferpool, make(map[int64]int64, BufferPoolSize),
 		NewDiskManager()}
 }
 
 // Read reads a page from buffer or disk.
-func (bm *BufferManager) Read(pid int, page *page.DataPage) (*page.DataPage, error) {
+func (bm *BufferManager) Read(pid int64, page *page.DataPage) (*page.DataPage, error) {
 
 	// Return the page from the cache.
-	if frame_idx, ok := bm.hitPage(pid); ok {
-		p := bm.bufferpool[frame_idx].Page()
-		return p, nil
+	if fidx, ok := bm.hitPage(pid); ok {
+		return bm.bufferpool[fidx].Page(), nil
 	}
 
 	// Choose the frame which will be set the page.
-	frame_idx, ok := bm.getFreeBuffer()
+	fidx, ok := bm.getFreeBuffer()
 	if !ok {
-		frame_idx, _ = bm.chooseVictim()
-		bm.WriteBack(frame_idx)
+		fidx = bm.chooseVictim()
+		bm.WriteBack(fidx)
 	}
 
 	// Fetch the byte data from the disk storage.
-	size, err := bm.dm.GetBufferSize(int64(pid))
+	size, err := bm.dm.GetBufferSize(pid)
 	if err != nil {
 		return nil, err
 	}
@@ -71,21 +70,26 @@ func (bm *BufferManager) Read(pid int, page *page.DataPage) (*page.DataPage, err
 	}
 
 	// Set the page to the buffer.
-	bm.setPage(frame_idx, pid, page)
+	bm.bufferpool[fidx].SetPage(page)
+	bm.dict[pid] = fidx
 
 	return page, nil
 }
 
-func (bm *BufferManager) Update(pid int, page *page.DataPage) error {
+// Update updates the page which has the page id with the given page.
+func (bm *BufferManager) Update(pid int64, page *page.DataPage) error {
 
-	frame_idx, ok := bm.hitPage(pid)
+	// Choose the frame which will be set the page.
+	fidx, ok := bm.hitPage(pid)
 	if !ok {
-		frame_idx, _ = bm.chooseVictim()
-		bm.WriteBack(frame_idx)
+		fidx = bm.chooseVictim()
+		bm.WriteBack(fidx)
 	}
 
-	if bm.bufferpool[frame_idx].PinCount() == 0 {
-		bm.bufferpool[frame_idx].SetPage(page)
+	// Set the page while considering about the transaction.
+	if bm.bufferpool[fidx].PinCount() == 0 {
+		bm.bufferpool[fidx].SetPage(page)
+		bm.bufferpool[fidx].TurnOnDirty()
 		return nil
 	} else {
 		// TODO: wait
@@ -95,32 +99,48 @@ func (bm *BufferManager) Update(pid int, page *page.DataPage) error {
 	return nil
 }
 
-func (bm *BufferManager) Create(p *page.DataPage) (int, error) {
+// Create appends the page to the disk and returns the new page id.
+func (bm *BufferManager) Create(page *page.DataPage) (int64, error) {
 
 	// Get an available free page id.
-	pid, err := bm.dm.GetFreePageID(datautil.Keys(bm.dict))
+	pid, err := bm.dm.GetFreePageID(util.Keys(bm.dict))
 	if err != nil {
 		return -1, err
 	}
 
 	// Choose the frame which will be set the page.
-	frame_idx, ok := bm.getFreeBuffer()
+	fidx, ok := bm.getFreeBuffer()
 	if !ok {
-		frame_idx, _ = bm.chooseVictim()
-		bm.WriteBack(frame_idx)
+		fidx = bm.chooseVictim()
+		bm.WriteBack(fidx)
 	}
 
 	// Set the new page to the frame.
-	p.SetPid(int64(pid))
-	bm.setPage(frame_idx, pid, p)
+	page.SetPid(pid)
+	bm.bufferpool[fidx].SetPage(page)
+	bm.bufferpool[fidx].TurnOnDirty()
+	bm.dict[pid] = fidx
 
 	return pid, nil
 }
 
-func (bm *BufferManager) WriteBack(frame_idx int) error {
+// WriteBack is the expiring process of the page. The dirty page must be written
+// it's contents back to the disk. The non dirty page doesn't need to do so.
+func (bm *BufferManager) WriteBack(fidx int64) error {
 
-	// Get and delete the target page.
-	page := bm.bufferpool[frame_idx].Page()
+	// Get the target page.
+	page := bm.bufferpool[fidx].Page()
+
+	// Clean the buffer.
+	bm.bufferpool[fidx].DeletePage()
+	delete(bm.dict, page.Pid())
+
+	// Non dirty page doesn't need to be written back.
+	if !bm.bufferpool[fidx].Dirty() {
+		return nil
+	}
+
+	// Dirty page needs to be written back.
 
 	// Do seriarize.
 	var buf bytes.Buffer
@@ -130,19 +150,22 @@ func (bm *BufferManager) WriteBack(frame_idx int) error {
 		return err
 	}
 
-	// Write back the page to disk storage.
-	bm.dm.Write(int(page.Pid()), buf.Bytes())
+	// Write the page back to the disk storage.
+	err = bm.dm.Write(page.Pid(), buf.Bytes())
+	if err != nil {
+		return err
+	}
 
-	// Clean the buffer.
-	bm.bufferpool[frame_idx].DeletePage()
-	delete(bm.dict, int(page.Pid()))
+	// Reset the dirty flag.
+	bm.bufferpool[fidx].TurnOffDirty()
 
 	return nil
 }
 
+// WriteBackAll executes WriteBack process for all of pages on the cache.
 func (bm *BufferManager) WriteBackAll() error {
-	for _, frame_idx := range bm.dict {
-		err := bm.WriteBack(frame_idx)
+	for _, fidx := range bm.dict {
+		err := bm.WriteBack(fidx)
 		if err != nil {
 			return err
 		}
@@ -150,38 +173,34 @@ func (bm *BufferManager) WriteBackAll() error {
 	return nil
 }
 
-func (bm *BufferManager) pin(frame_idx int) {
-	bm.bufferpool[frame_idx].IncPinCount()
+func (bm *BufferManager) pin(fidx int64) {
+	bm.bufferpool[fidx].IncPinCount()
 }
 
-func (bm *BufferManager) unpin(frame_idx int) {
-	bm.bufferpool[frame_idx].DecPinCount()
+func (bm *BufferManager) unpin(fidx int64) {
+	bm.bufferpool[fidx].DecPinCount()
 }
 
-func (bm *BufferManager) hitPage(pid int) (int, bool) {
-	frame_idx, ok := bm.dict[pid]
-	return frame_idx, ok
+func (bm *BufferManager) hitPage(pid int64) (int64, bool) {
+	fidx, ok := bm.dict[pid]
+	return fidx, ok
 }
 
-func (bm *BufferManager) getFreeBuffer() (int, bool) {
+func (bm *BufferManager) getFreeBuffer() (int64, bool) {
 	for i := 0; i < BufferPoolSize; i++ {
 		if bm.bufferpool[i].Page() == nil {
-			return i, true
+			return int64(i), true
 		}
 	}
 	return -1, false
 }
 
-func (bm *BufferManager) setPage(frame_idx int, pid int, page *page.DataPage) {
-	bm.bufferpool[frame_idx].SetPage(page)
-	bm.dict[pid] = frame_idx
-}
-
-func (bm *BufferManager) chooseVictim() (int, bool) {
+func (bm *BufferManager) chooseVictim() int64 {
 	// TODO: use some algorithm (i.g. LRU, FIFO, ...)
-	return rand.Intn(BufferPoolSize), true
+	return rand.Int63n(BufferPoolSize)
 }
 
+// Dump prints the inner information. It's for debug.
 func (bm *BufferManager) Dump() {
 	for i := 0; i < len(bm.bufferpool); i++ {
 		fmt.Println(bm.bufferpool[i])

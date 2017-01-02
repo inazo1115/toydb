@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/inazo1115/toydb/lib/file"
 	"github.com/inazo1115/toydb/lib/page"
@@ -26,13 +27,14 @@ func main() {
 	}
 	ba.WriteBackAll()
 
-	// Insert
 	h := file.NewHeapFile()
 
-	for i := 0; i < 10000; i++ {
+	// Insert
+	for i := 0; i < 100; i++ {
 		s := fmt.Sprintf("foofoofoo%d", i)
 		err = h.Insert(int64(rootPid), s)
 		if err != nil {
+			debug.PrintStack()
 			panic(err)
 		}
 	}

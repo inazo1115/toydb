@@ -26,18 +26,16 @@ func serializeRecord(s string) []byte {
 }
 
 //func Scan(rootPid int64) []*page.Record {
-func (f *HeapFile) Scan(rootPid int64) (*[]string, error) {
-
-	fmt.Println(rootPid)
+func (f *HeapFile) Scan(pid int64) (*[]string, error) {
 
 	ret := make([]string, 0)
 
 	p := &page.DataPage{}
-	next := rootPid
+	next := pid
 
 	for next != -1 {
 
-		_, err := f.bm.Read(int(next), p)
+		p, err := f.bm.Read(next, p)
 		if err != nil {
 			return nil, err
 		}
@@ -53,12 +51,12 @@ func (f *HeapFile) Scan(rootPid int64) (*[]string, error) {
 	return &ret, nil
 }
 
-func (f *HeapFile) Insert(rootPid int64, record string) error {
+func (f *HeapFile) Insert(pid int64, record string) error {
 
 	p := &page.DataPage{}
 
 	var err error
-	p, err = f.bm.Read(int(rootPid), p)
+	p, err = f.bm.Read(pid, p)
 	if err != nil {
 		return err
 	}
@@ -66,6 +64,7 @@ func (f *HeapFile) Insert(rootPid int64, record string) error {
 	// Insert the record into this page.
 	if p.HasFreeSpace() {
 		p.AddRecord(serializeRecord(record))
+		f.bm.Update(p.Pid(), p)
 		return nil
 	}
 
@@ -81,7 +80,14 @@ func (f *HeapFile) Insert(rootPid int64, record string) error {
 	if err != nil {
 		return err
 	}
-	p.SetNext(int64(newPid))
+
+	// Set the pointer to the next page.
+	p, err = f.bm.Read(p.Pid(), p)
+	if err != nil {
+		return err
+	}
+	p.SetNext(newPid)
+	f.bm.Update(p.Pid(), p)
 
 	return nil
 }
@@ -91,7 +97,7 @@ func (f *HeapFile) Dump(pid int64) {
 	p := &page.DataPage{}
 
 	var err error
-	p, err = f.bm.Read(int(pid), p)
+	p, err = f.bm.Read(pid, p)
 	if err != nil {
 		panic(err)
 	}
