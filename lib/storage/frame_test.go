@@ -10,16 +10,16 @@ func TestFramePage(t *testing.T) {
 	p0 := page.NewDataPage(-1, -1, -1)
 	f := NewFrame(p0)
 	if f.Page() != p0 {
-		t.Errorf("NewFrame failed")
+		t.Errorf("NewFrame failed.")
 	}
 	p1 := page.NewDataPage(-1, -1, -1)
 	f.SetPage(p1)
 	if f.Page() != p1 {
-		t.Errorf("SetFrame failed")
+		t.Errorf("SetFrame failed.")
 	}
 	f.DeletePage()
 	if f.Page() != nil {
-		t.Errorf("DeleteFrame failed")
+		t.Errorf("DeleteFrame failed.")
 	}
 }
 

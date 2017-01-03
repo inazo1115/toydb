@@ -8,9 +8,9 @@ import (
 // some information of the cache control.
 type Frame struct {
 	page     *page.DataPage
-	pinCount int32
+	pinCount int64
 	dirty    bool
-	hitCount int32 // hitCount is used by cache control strategy.
+	hitCount int64 // hitCount is used by cache control strategy.
 }
 
 // NewFrame creates a new frame and returns it's pointer.
@@ -34,7 +34,7 @@ func (f *Frame) DeletePage() {
 }
 
 // PinCount is the setter of the pinCount.
-func (f *Frame) PinCount() int32 {
+func (f *Frame) PinCount() int64 {
 	return f.pinCount
 }
 
@@ -65,7 +65,7 @@ func (f *Frame) TurnOffDirty() {
 }
 
 // HitCount is the getter of the hitCount.
-func (f *Frame) HitCount() int32 {
+func (f *Frame) HitCount() int64 {
 	return f.hitCount
 }
 
@@ -75,6 +75,6 @@ func (f *Frame) IncHitCount() {
 }
 
 // SetHitCount is the setter of the hitCount.
-func (f *Frame) SetHitCount(hitCount int32) {
+func (f *Frame) SetHitCount(hitCount int64) {
 	f.hitCount = hitCount
 }
