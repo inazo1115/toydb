@@ -35,7 +35,8 @@ func NewBufferManager() *BufferManager {
 	}
 
 	return &BufferManager{bufferPool, bufferPoolSize_,
-		make(map[int64]int64, bufferPoolSize_), NewDiskManager(), NewLRUStrategy()}
+		make(map[int64]int64, bufferPoolSize_), NewDiskManager(),
+		NewLRUStrategy()}
 }
 
 // Read reads a page from buffer or disk. The return value is set in given page
@@ -52,7 +53,7 @@ func (bm *BufferManager) Read(pid int64, p *page.DataPage) error {
 	fidx, ok := bm.getFreeBuffer()
 	if !ok {
 		fidx = bm.cacheStrat.ChooseVictim(bm)
-		bm.WriteBack(fidx)
+		bm.writeBack(fidx)
 	}
 
 	// Fetch the byte data from the disk storage.
@@ -88,7 +89,7 @@ func (bm *BufferManager) Update(pid int64, p *page.DataPage) error {
 	fidx, ok := bm.hitPage(pid)
 	if !ok {
 		fidx = bm.cacheStrat.ChooseVictim(bm)
-		bm.WriteBack(fidx)
+		bm.writeBack(fidx)
 	}
 
 	// Set the page while considering about the transaction.
@@ -120,7 +121,7 @@ func (bm *BufferManager) Create(p *page.DataPage) (int64, error) {
 	fidx, ok := bm.getFreeBuffer()
 	if !ok {
 		fidx = bm.cacheStrat.ChooseVictim(bm)
-		bm.WriteBack(fidx)
+		bm.writeBack(fidx)
 	}
 
 	// Set the new page to the frame.
@@ -135,9 +136,35 @@ func (bm *BufferManager) Create(p *page.DataPage) (int64, error) {
 	return pid, nil
 }
 
-// WriteBack is the expiring process of the page. The dirty page must be written
+// WriteBackAll executes WriteBack process for all of pages on the cache.
+func (bm *BufferManager) WriteBackAll() error {
+	for _, fidx := range bm.dict {
+		if err := bm.writeBack(fidx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// hitPage checks given page id is on the cache.
+func (bm *BufferManager) hitPage(pid int64) (int64, bool) {
+	fidx, ok := bm.dict[pid]
+	return fidx, ok
+}
+
+// getFreeBuffer looks for an empty frame.
+func (bm *BufferManager) getFreeBuffer() (int64, bool) {
+	for i := 0; i < int(bm.bufferPoolSize); i++ {
+		if bm.bufferPool[i].Page() == nil {
+			return int64(i), true
+		}
+	}
+	return -1, false
+}
+
+// writeBack is the expiring process of the page. The dirty page must be written
 // it's contents back to the disk. The non dirty page doesn't need to do so.
-func (bm *BufferManager) WriteBack(fidx int64) error {
+func (bm *BufferManager) writeBack(fidx int64) error {
 
 	// Get the target page.
 	p := bm.bufferPool[fidx].Page()
@@ -172,32 +199,6 @@ func (bm *BufferManager) WriteBack(fidx int64) error {
 	bm.bufferPool[fidx].TurnOffDirty()
 
 	return nil
-}
-
-// WriteBackAll executes WriteBack process for all of pages on the cache.
-func (bm *BufferManager) WriteBackAll() error {
-	for _, fidx := range bm.dict {
-		if err := bm.WriteBack(fidx); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// hitPage checks given page id is on the cache.
-func (bm *BufferManager) hitPage(pid int64) (int64, bool) {
-	fidx, ok := bm.dict[pid]
-	return fidx, ok
-}
-
-// getFreeBuffer looks for an empty frame.
-func (bm *BufferManager) getFreeBuffer() (int64, bool) {
-	for i := 0; i < int(bm.bufferPoolSize); i++ {
-		if bm.bufferPool[i].Page() == nil {
-			return int64(i), true
-		}
-	}
-	return -1, false
 }
 
 // Dump prints the inner information. It's for debug.
