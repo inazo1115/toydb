@@ -8,6 +8,12 @@ import (
 	"github.com/inazo1115/toydb/lib/pkg"
 )
 
+// Receivers of the package parameter. To aim for convenience of DI.
+var (
+	blockSize = int64(pkg.BlockSize)
+	dataFile  = string(pkg.DataFile)
+)
+
 // DiskManager deals random access files provided by OS. DiskManager calls
 // file read and file write API and returns results to BufferManager.
 type DiskManager struct {
@@ -26,7 +32,7 @@ func (dm *DiskManager) Read(pid int64, buf []byte) error {
 		return err
 	}
 
-	_, err = file.ReadAt(buf, pid*pkg.BlockSize)
+	_, err = file.ReadAt(buf, pid*blockSize)
 	if err != nil {
 		return err
 	}
@@ -42,7 +48,7 @@ func (dm *DiskManager) Write(pid int64, data []byte) error {
 		return err
 	}
 
-	_, err = file.WriteAt(data, pid*pkg.BlockSize)
+	_, err = file.WriteAt(data, pid*blockSize)
 	if err != nil {
 		return err
 	}
@@ -64,7 +70,7 @@ func (dm *DiskManager) GetFreePageID(used []int64) (int64, error) {
 	}
 
 	// TODO: refine selection logic.
-	min := int64(math.Ceil(float64(stat.Size()) / pkg.BlockSize))
+	min := int64(math.Ceil(float64(stat.Size()) / float64(blockSize)))
 
 	if len(used) == 0 {
 		return min, nil
@@ -81,7 +87,7 @@ func (dm *DiskManager) GetFreePageID(used []int64) (int64, error) {
 }
 
 // GetBufferSize returns a buffer size which is needed to obtain page.
-func (dm *DiskManager) GetBufferSize(pid int64) (int32, error) {
+func (dm *DiskManager) GetBufferSize(pid int64) (int64, error) {
 
 	file, err := dm.getFile()
 	if err != nil {
@@ -93,11 +99,22 @@ func (dm *DiskManager) GetBufferSize(pid int64) (int32, error) {
 		return -1, err
 	}
 
-	if stat.Size() < pkg.BlockSize*(pid+1) {
-		return int32(stat.Size() - (pkg.BlockSize * pid)), nil
+	if stat.Size() < blockSize*(pid+1) {
+		return stat.Size() - (blockSize * pid), nil
 	}
 
-	return pkg.BlockSize, nil
+	return blockSize, nil
+}
+
+// getFile returns pointer to file.
+func (dm *DiskManager) getFile() (*os.File, error) {
+
+	file, err := os.OpenFile(dataFile, os.O_CREATE|os.O_RDWR, 0660)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
 }
 
 // Dump dumps bytes of specified block. It's for debug.
@@ -108,22 +125,11 @@ func (dm *DiskManager) Dump(pid int64) {
 		panic(err)
 	}
 
-	buf := make([]byte, pkg.BlockSize)
-	_, err = file.ReadAt(buf, pid*pkg.BlockSize)
+	buf := make([]byte, blockSize)
+	_, err = file.ReadAt(buf, pid*blockSize)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println(buf)
-}
-
-// getFile returns pointer to file.
-func (dm *DiskManager) getFile() (*os.File, error) {
-
-	file, err := os.OpenFile(pkg.DataFile, os.O_CREATE|os.O_RDWR, 0660)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
 }
