@@ -111,18 +111,38 @@ func TestChooseVictim(t *testing.T) {
 	}
 
 	p1 := page.NewDataPage(-1, -1, -1)
-	if _, err = bm.Create(p1); err != nil {
+	pid1, err := bm.Create(p1)
+	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
 	p2 := page.NewDataPage(-1, -1, -1)
-	if _, err = bm.Create(p2); err != nil {
+	pid2, err := bm.Create(p2)
+	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
 	// Assert.
 	actual := bm.cacheStrat.ChooseVictim(bm)
 	expected := int64(bm.dict[pid0])
+	if actual != expected {
+		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
+	}
+
+	actual = bm.bufferPool[bm.dict[pid0]].HitCount()
+	expected = int64(2)
+	if actual != expected {
+		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
+	}
+
+	actual = bm.bufferPool[bm.dict[pid1]].HitCount()
+	expected = int64(1)
+	if actual != expected {
+		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
+	}
+
+	actual = bm.bufferPool[bm.dict[pid2]].HitCount()
+	expected = int64(0)
 	if actual != expected {
 		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
 	}

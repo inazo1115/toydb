@@ -1,9 +1,5 @@
 package storage
 
-import (
-	"math"
-)
-
 // LRUStrategy is the cache eviction strategy which uses pseudo LRU algorithm.
 type LRUStrategy struct {
 }
@@ -30,21 +26,13 @@ func (s *LRUStrategy) ChooseVictim(bm *BufferManager) int64 {
 
 	// Choose the frame which stores the oldest page.
 	max := int64(-1)
-	min := int64(math.MaxInt64)
-	target := int64(-1)
-	for fidx, frame := range bm.bufferPool {
+	fidx := int64(-1)
+	for i, frame := range bm.bufferPool {
 		if max < frame.HitCount() {
 			max = frame.HitCount()
-			target = int64(fidx)
-		} else if min > frame.HitCount() {
-			min = frame.HitCount()
+			fidx = int64(i)
 		}
 	}
 
-	// Align minimum count to zero.
-	for _, frame := range bm.bufferPool {
-		frame.SetHitCount(frame.HitCount() - min)
-	}
-
-	return target
+	return fidx
 }
