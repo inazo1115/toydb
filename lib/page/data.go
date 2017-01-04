@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
-	//"math"
+	//"fmt"
 
 	"github.com/inazo1115/toydb/lib/pkg"
-	//"github.com/inazo1115/toydb/lib/table"
 )
 
 // tmp
@@ -75,22 +73,9 @@ func (p *DataPage) AddRecord(r []byte) error {
 		return errors.New("record size is wrong")
 	}
 
-	fmt.Println("AddRecord")
-	fmt.Println(r)
-	fmt.Println(len(p.data))
-	fmt.Println(len(r))
-
 	for i := 0; i < int(p.recordSize); i++ {
 		p.data[p.numRecords*p.recordSize+int64(i)] = r[i]
 	}
-	/*
-	for i := 0; i < int(p.recordSize); i++ {
-		if i >= len(r) {
-			p.data[p.numRecords*p.recordSize+int64(i)] = 0
-		} else {
-			p.data[p.numRecords*p.recordSize+int64(i)] = r[i]
-		}
-	}*/
 
 	p.numRecords++
 
@@ -99,12 +84,6 @@ func (p *DataPage) AddRecord(r []byte) error {
 
 func (p *DataPage) ReadRecord(ridx int64) []byte {
 	off := ridx * p.recordSize
-
-	fmt.Println("ReadRecord")
-	fmt.Println(off)
-	fmt.Println((off + p.recordSize))
-	fmt.Println(len(p.data))
-
 	return p.data[off:(off + p.recordSize)]
 }
 

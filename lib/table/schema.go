@@ -17,6 +17,10 @@ func NewSchema(cols []*Column) *Schema {
 	return &Schema{cols}
 }
 
+func (s *Schema) Columns() []*Column {
+	return s.cols
+}
+
 func (s *Schema) RecordSize() int64 {
 	size := int64(0)
 	for _, c := range s.cols {

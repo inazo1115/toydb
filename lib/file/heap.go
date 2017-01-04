@@ -53,12 +53,12 @@ func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 
 		// Read records.
 		for i := 0; i < int(p.NumRecords()); i++ {
-			tmp := p.ReadRecord(int64(i))
-			rec, err := f.schema.DeserializeRecord(tmp)
+			r := p.ReadRecord(int64(i))
+			b, err := f.schema.DeserializeRecord(r)
 			if err != nil {
 				return nil, err
 			}
-			ret = append(ret, rec)
+			ret = append(ret, b)
 		}
 
 		next = p.Next()
@@ -69,9 +69,6 @@ func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 
 // Insert inserts a record into the page.
 func (f *HeapFile) Insert(pid int64, record *table.Record) error {
-
-	fmt.Println("Insert")
-	fmt.Println(pid)
 
 	serialized, err := f.schema.SerializeRecord(record)
 	if err != nil {

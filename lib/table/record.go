@@ -1,5 +1,10 @@
 package table
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Record
 
 type Record struct {
@@ -32,4 +37,15 @@ func NewValueString(v string) *Value {
 
 func (v *Value) Type() ToyDBType {
 	return v.type_
+}
+
+func (v *Value) String() string {
+	switch v.type_ {
+	case INT64:
+		return fmt.Sprintf("%d", v.vInt64)
+	case STRING:
+		return strings.TrimSpace(v.vString)
+	default:
+		panic("foofoo")
+	}
 }
