@@ -20,7 +20,7 @@ func NewSchema(cols []*Column) *Schema {
 func (s *Schema) RecordSize() int64 {
 	size := int64(0)
 	for _, c := range s.cols {
-		size += int64(c.Type().Size())
+		size += int64(c.colSize)
 	}
 	return size
 }
@@ -58,7 +58,7 @@ func (s *Schema) DeserializeRecord(b []byte) (*Record, error) {
 	to := 0
 
 	for i, col := range s.cols {
-		to += col.Type().Size()
+		to += int(col.colSize)
 		values[i] = col.DeserializeValue(b[from:to])
 		from = to
 	}
@@ -69,16 +69,17 @@ func (s *Schema) DeserializeRecord(b []byte) (*Record, error) {
 // Column
 
 type Column struct {
-	name  string
-	type_ ToyDBType
+	name    string
+	type_   ToyDBType
+	colSize int32
 }
 
 func NewColumnInt64(name string) *Column {
-	return &Column{name, INT64}
+	return &Column{name, INT64, INT64Size}
 }
 
-func NewColumnString(name string) *Column {
-	return &Column{name, STRING}
+func NewColumnString(name string, colSize int32) *Column {
+	return &Column{name, STRING, colSize}
 }
 
 func (c *Column) Name() string {
@@ -94,7 +95,7 @@ func (c *Column) SerializeValue(v *Value) []byte {
 	case INT64:
 		return util.SerializeInt64(v.vInt64)
 	case STRING:
-		return util.SerializeString(v.vString, int64(c.Type().Size()))
+		return util.SerializeString(v.vString, int64(c.colSize))
 	default:
 		panic("SerializeValue")
 	}
@@ -105,7 +106,7 @@ func (c *Column) DeserializeValue(b []byte) *Value {
 	case INT64:
 		return NewValueInt64(util.DeserializeInt64(b))
 	case STRING:
-		return NewValueString(util.DeserializeString(b, int64(c.Type().Size())))
+		return NewValueString(util.DeserializeString(b, int64(c.colSize)))
 	default:
 		panic("DeserializeValue")
 	}

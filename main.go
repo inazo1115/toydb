@@ -22,7 +22,7 @@ func main() {
 	// Init
 
 	cols := make([]*table.Column, 2)
-	cols[0] = table.NewColumnString("name")
+	cols[0] = table.NewColumnString("name", 20)
 	cols[1] = table.NewColumnInt64("age")
 	schame := table.NewSchema(cols)
 	bm := storage.NewBufferManager()

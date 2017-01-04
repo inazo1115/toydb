@@ -18,13 +18,13 @@ func (t ToyDBType) String() string {
 	}
 }
 
-func (t ToyDBType) Size() int {
+const INT64Size = 8
+
+/*func (t ToyDBType) Size() int {
 	switch t {
 	case INT64:
 		return 8
-	case STRING:
-		return 20
 	default:
 		panic("Unknown type")
 	}
-}
+}*/
