@@ -18,10 +18,14 @@ func DeserializeInt64(b []byte) int64 {
 	return v
 }
 
-func SerializeString(v string) []byte {
-	return []byte(v)
+func SerializeString(v string, size int64) []byte {
+	buf := make([]byte, size)
+	for i, b := range []byte(v) {
+		buf[i] = b
+	}
+	return buf
 }
 
-func DeserializeString(b []byte) string {
-	return string(b)
+func DeserializeString(b []byte, size int64) string {
+	return string(b)[:size]
 }

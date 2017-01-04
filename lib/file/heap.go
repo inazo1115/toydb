@@ -6,24 +6,38 @@ import (
 
 	"github.com/inazo1115/toydb/lib/page"
 	"github.com/inazo1115/toydb/lib/storage"
+	"github.com/inazo1115/toydb/lib/table"
 )
 
 // HeapFile is the representation of the file and access methods. HeapFile is
 // the linked list of pages.
 type HeapFile struct {
-	bm *storage.BufferManager
+	rootPid int64
+	bm      *storage.BufferManager
+	schema  *table.Schema
 }
 
 // NewHeapFile creates HeapFile struct and returns it's pointer.
-func NewHeapFile() *HeapFile {
-	return &HeapFile{storage.NewBufferManager()}
+func NewHeapFile(bm *storage.BufferManager, schema *table.Schema) *HeapFile {
+
+	rootPage := page.NewDataPage(-1, -1, -1, schema.RecordSize())
+	rootPid, err := bm.Create(rootPage)
+	if err != nil {
+		panic(err)
+	}
+
+	return &HeapFile{rootPid, bm, schema}
+}
+
+func (f *HeapFile) RootPid() int64 {
+	return f.rootPid
 }
 
 // Scan scans all records. The traversing begins from given page id.
-func (f *HeapFile) Scan(pid int64) ([]string, error) {
+func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 
 	// Prepare the result variable.
-	ret := make([]string, 0)
+	ret := make([]*table.Record, 0)
 
 	// Traverse the linked list of pages.
 	p := &page.DataPage{}
@@ -38,7 +52,10 @@ func (f *HeapFile) Scan(pid int64) ([]string, error) {
 
 		// Read records.
 		for i := 0; i < int(p.NumRecords()); i++ {
-			rec := deserializeRecord(p.ReadRecord(i))
+			rec, err := f.schema.DeserializeRecord(p.ReadRecord(int64(i)))
+			if err != nil {
+				return nil, err
+			}
 			ret = append(ret, rec)
 		}
 
@@ -49,7 +66,7 @@ func (f *HeapFile) Scan(pid int64) ([]string, error) {
 }
 
 // Insert inserts a record into the page.
-func (f *HeapFile) Insert(pid int64, record string) error {
+func (f *HeapFile) Insert(pid int64, record *table.Record) error {
 
 	p := &page.DataPage{}
 
@@ -58,9 +75,18 @@ func (f *HeapFile) Insert(pid int64, record string) error {
 		return err
 	}
 
+	fmt.Println("**********************")
+	fmt.Println(record.Values())
+	fmt.Println(record.Values()[0])
+	fmt.Println(record.Values()[1])
+
 	// Insert the record into this page.
 	if p.HasFreeSpace() {
-		p.AddRecord(serializeRecord(record))
+		b, err := f.schema.SerializeRecord(record)
+		if err != nil {
+			return err
+		}
+		p.AddRecord(b)
 		f.bm.Update(p.Pid(), p)
 		return nil
 	}
@@ -71,8 +97,12 @@ func (f *HeapFile) Insert(pid int64, record string) error {
 	}
 
 	// Create the new page and insert the record into it.
-	newPage := page.NewDataPage(-1, p.Pid(), -1)
-	newPage.AddRecord(serializeRecord(record))
+	newPage := page.NewDataPage(-1, p.Pid(), -1, f.schema.RecordSize())
+	b, err := f.schema.SerializeRecord(record)
+	if err != nil {
+		return err
+	}
+	newPage.AddRecord(b)
 	newPid, err := f.bm.Create(newPage)
 	if err != nil {
 		return err
@@ -121,14 +151,4 @@ func (f *HeapFile) WriteBackAll() error {
 		return err
 	}
 	return nil
-}
-
-// tmp
-func deserializeRecord(b []byte) string {
-	return string(b)
-}
-
-// tmp
-func serializeRecord(s string) []byte {
-	return []byte(s)
 }

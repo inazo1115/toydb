@@ -5,27 +5,31 @@ import (
 	"encoding/binary"
 	"errors"
 	//"fmt"
-	"math"
+	//"math"
 
 	"github.com/inazo1115/toydb/lib/pkg"
+	//"github.com/inazo1115/toydb/lib/table"
 )
 
-// tmp
-const RecordSize = 24 // 8 * 3
 const StructMetaInfoSize = 16
+
+//const Int64Size = table.INT64.Size()
 const Int64Size = 8
-const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + (Int64Size * 4))
+const FieldValueSize = Int64Size * 5
+const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + FieldValueSize)
 
 type DataPage struct {
 	pid        int64
 	previous   int64
 	next       int64
 	numRecords int64
+	recordSize int64
 	data       []byte
 }
 
-func NewDataPage(pid int64, previous int64, next int64) *DataPage {
-	return &DataPage{pid, previous, next, 0, make([]byte, getDataSize())}
+func NewDataPage(pid int64, previous int64, next int64, recordSize int64) *DataPage {
+	data := make([]byte, FreeSpaceSize)
+	return &DataPage{pid, previous, next, 0, recordSize, data}
 }
 
 func (p *DataPage) Pid() int64 {
@@ -57,8 +61,7 @@ func (p *DataPage) NumRecords() int64 {
 }
 
 func (p *DataPage) HasFreeSpace() bool {
-	//return (FreeSpaceSize - p.numRecords*RecordSize) >= RecordSize
-	return p.numRecords <= 5
+	return (FreeSpaceSize - p.numRecords*p.recordSize) >= p.recordSize
 }
 
 func (p *DataPage) Data() []byte {
@@ -67,26 +70,30 @@ func (p *DataPage) Data() []byte {
 
 func (p *DataPage) AddRecord(r []byte) error {
 
-	if len(r) > RecordSize {
-		return errors.New("record size is too big")
+	if len(r) != int(p.recordSize) {
+		return errors.New("record size is wrong")
 	}
 
-	for i := 0; i < RecordSize; i++ {
-		if i >= len(r) {
-			p.data[int(p.numRecords)*RecordSize+i] = 0
-		} else {
-			p.data[int(p.numRecords)*RecordSize+i] = r[i]
-		}
+	for i := 0; i < int(p.recordSize); i++ {
+		p.data[p.numRecords*p.recordSize+int64(i)] = r[i]
 	}
+	/*
+	for i := 0; i < int(p.recordSize); i++ {
+		if i >= len(r) {
+			p.data[p.numRecords*p.recordSize+int64(i)] = 0
+		} else {
+			p.data[p.numRecords*p.recordSize+int64(i)] = r[i]
+		}
+	}*/
 
 	p.numRecords++
 
 	return nil
 }
 
-func (p *DataPage) ReadRecord(ridx int) []byte {
-	off := int64(ridx * RecordSize)
-	return p.data[off:(off + RecordSize)]
+func (p *DataPage) ReadRecord(ridx int64) []byte {
+	off := ridx * p.recordSize
+	return p.data[off:(off + p.recordSize)]
 }
 
 func (p *DataPage) MarshalBinary() (data []byte, err error) {
@@ -95,6 +102,7 @@ func (p *DataPage) MarshalBinary() (data []byte, err error) {
 	_ = binary.Write(buf, binary.LittleEndian, p.previous)
 	_ = binary.Write(buf, binary.LittleEndian, p.next)
 	_ = binary.Write(buf, binary.LittleEndian, p.numRecords)
+	_ = binary.Write(buf, binary.LittleEndian, p.recordSize)
 	_ = binary.Write(buf, binary.LittleEndian, p.data)
 	return buf.Bytes(), nil
 }
@@ -115,16 +123,15 @@ func (p *DataPage) UnmarshalBinary(data []byte) error {
 	if err := binary.Read(buf, binary.LittleEndian, &p.numRecords); err != nil {
 		return err
 	}
+	if err := binary.Read(buf, binary.LittleEndian, &p.recordSize); err != nil {
+		return err
+	}
 
-	tmp := make([]byte, getDataSize())
+	tmp := make([]byte, p.recordSize)
 	if err := binary.Read(buf, binary.LittleEndian, &tmp); err != nil {
 		return err
 	}
 	p.data = tmp
 
 	return nil
-}
-
-func getDataSize() int {
-	return int(math.Floor(float64(FreeSpaceSize/RecordSize))) * RecordSize
 }
