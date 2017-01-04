@@ -29,19 +29,15 @@ func NewHeapFile(bm *storage.BufferManager, schema *table.Schema) *HeapFile {
 	return &HeapFile{rootPid, bm, schema}
 }
 
-func (f *HeapFile) RootPid() int64 {
-	return f.rootPid
-}
-
 // Scan scans all records. The traversing begins from given page id.
-func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
+func (f *HeapFile) Scan() ([]*table.Record, error) {
 
 	// Prepare the result variable.
 	ret := make([]*table.Record, 0)
 
 	// Traverse the linked list of pages.
 	p := &page.DataPage{}
-	next := pid
+	next := f.rootPid
 
 	for next != -1 {
 
@@ -68,45 +64,51 @@ func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 }
 
 // Insert inserts a record into the page.
-func (f *HeapFile) Insert(pid int64, record *table.Record) error {
+func (f *HeapFile) Insert(record *table.Record) error {
 
 	serialized, err := f.schema.SerializeRecord(record)
 	if err != nil {
 		return err
 	}
 
-	p := &page.DataPage{}
+	next := f.rootPid
+	for {
 
-	err = f.bm.Read(pid, p)
-	if err != nil {
-		return err
-	}
+		p := &page.DataPage{}
 
-	// Insert the record into this page.
-	if p.HasFreeSpace() {
-		p.AddRecord(serialized)
+		err = f.bm.Read(next, p)
+		if err != nil {
+			return err
+		}
+
+		// Insert the record into this page.
+		if p.HasFreeSpace() {
+			p.AddRecord(serialized)
+			f.bm.Update(p.Pid(), p)
+			return nil
+		}
+
+		// Follow the link to the next page.
+		if p.Next() != -1 {
+			next = p.Next()
+			continue
+		}
+
+		// Create the new page and insert the record into it.
+		newPage := page.NewDataPage(-1, p.Pid(), -1, f.schema.RecordSize())
+		newPage.AddRecord(serialized)
+		newPid, err := f.bm.Create(newPage)
+		if err != nil {
+			return err
+		}
+		// Set the link to the next page.
+		if err = f.bm.Read(p.Pid(), p); err != nil {
+			return err
+		}
+		p.SetNext(newPid)
 		f.bm.Update(p.Pid(), p)
-		return nil
+		break
 	}
-
-	// Follow the link to the next page.
-	if p.Next() != -1 {
-		return f.Insert(p.Next(), record)
-	}
-
-	// Create the new page and insert the record into it.
-	newPage := page.NewDataPage(-1, p.Pid(), -1, f.schema.RecordSize())
-	newPage.AddRecord(serialized)
-	newPid, err := f.bm.Create(newPage)
-	if err != nil {
-		return err
-	}
-	// Set the link to the next page.
-	if err = f.bm.Read(p.Pid(), p); err != nil {
-		return err
-	}
-	p.SetNext(newPid)
-	f.bm.Update(p.Pid(), p)
 
 	return nil
 }

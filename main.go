@@ -16,21 +16,21 @@ func log(msg interface{}) {
 func main() {
 
 	// Init
-	cols := make([]*table.Column, 2)
-	cols[0] = table.NewColumnString("name", 20)
-	cols[1] = table.NewColumnInt64("age")
-	schema := table.NewSchema(cols)
+	schema := table.NewSchema([]*table.Column{
+		table.NewColumnString("name", 20),
+		table.NewColumnInt64("age"),
+	})
+
 	bm := storage.NewBufferManager()
 	hf := file.NewHeapFile(bm, schema)
-	rootPid := hf.RootPid()
 
 	// Insert
-	for i := 0; i < 3000; i++ {
-		vals := make([]*table.Value, 2)
-		vals[0] = table.NewValueString(fmt.Sprintf("name%d", i))
-		vals[1] = table.NewValueInt64(int64(i))
-		record := table.NewRecord(vals)
-		err := hf.Insert(int64(rootPid), record)
+	for i := 0; i < 2000; i++ {
+		record := table.NewRecord([]*table.Value{
+			table.NewValueString("foofoobarbar"),
+			table.NewValueInt64(2018),
+		})
+		err := hf.Insert(record)
 		if err != nil {
 			panic(err)
 		}
@@ -39,7 +39,7 @@ func main() {
 	hf.WriteBackAll()
 
 	// Scan
-	res, err := hf.Scan(int64(rootPid))
+	res, err := hf.Scan()
 	if err != nil {
 		panic(err)
 	}
