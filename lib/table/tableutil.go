@@ -27,60 +27,40 @@ func PrintResult(schema *Schema, records []*Record) {
 		}
 	}
 
-	fmt.Printf("+")
-	for _, s := range sizes {
-		fmt.Printf(strings.Repeat("-", s+2))
-		fmt.Printf("+")
-	}
-	fmt.Printf("\n")
+	printBorder(sizes)
 
 	fmt.Printf("|")
 	for i, s := range sizes {
 		name := schema.Columns()[i].Name()
 		ws := s - len(name)
-		fmt.Printf(strings.Repeat(" ", 1))
-		fmt.Printf(name)
-		fmt.Printf(strings.Repeat(" ", ws+1))
+		printLeftAligned(name, ws)
 		fmt.Printf("|")
 	}
 	fmt.Printf("\n")
 
-	fmt.Printf("+")
-	for _, s := range sizes {
-		fmt.Printf(strings.Repeat("-", s+2))
-		fmt.Printf("+")
-	}
-	fmt.Printf("\n")
+	printBorder(sizes)
 
 	for _, r := range records {
 		fmt.Printf("|")
 		for i, s := range sizes {
-			name := r.Values()[i].String()
-			ws := s - lenStrByte(name)
+			value := r.Values()[i].String()
+			ws := s - lenStrByte(value)
+
 			switch schema.Columns()[i].Type() {
 			case INT64:
-				fmt.Printf(strings.Repeat(" ", ws+1))
-				fmt.Printf(name)
-				fmt.Printf(strings.Repeat(" ", 1))
-				fmt.Printf("|")
+				printRightAligned(value, ws)
 			case STRING:
-				fmt.Printf(strings.Repeat(" ", 1))
-				fmt.Printf(name)
-				fmt.Printf(strings.Repeat(" ", ws+1))
-				fmt.Printf("|")
+				printLeftAligned(value, ws)
 			default:
 				panic("will not reach here")
 			}
+
+			fmt.Printf("|")
 		}
 		fmt.Printf("\n")
 	}
 
-	fmt.Printf("+")
-	for _, s := range sizes {
-		fmt.Printf(strings.Repeat("-", s+2))
-		fmt.Printf("+")
-	}
-	fmt.Printf("\n")
+	printBorder(sizes)
 }
 
 func lenStrByte(s string) int {
@@ -92,4 +72,25 @@ func lenStrByte(s string) int {
 		size++
 	}
 	return size
+}
+
+func printBorder(sizes []int) {
+	fmt.Printf("+")
+	for _, s := range sizes {
+		fmt.Printf(strings.Repeat("-", s+2))
+		fmt.Printf("+")
+	}
+	fmt.Printf("\n")
+}
+
+func printLeftAligned(s string, ws int) {
+	fmt.Printf(strings.Repeat(" ", 1))
+	fmt.Printf(s)
+	fmt.Printf(strings.Repeat(" ", ws+1))
+}
+
+func printRightAligned(s string, ws int) {
+	fmt.Printf(strings.Repeat(" ", ws+1))
+	fmt.Printf(s)
+	fmt.Printf(strings.Repeat(" ", 1))
 }
