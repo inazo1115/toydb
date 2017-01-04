@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	//"fmt"
+	"fmt"
 	//"math"
 
 	"github.com/inazo1115/toydb/lib/pkg"
 	//"github.com/inazo1115/toydb/lib/table"
 )
 
-const StructMetaInfoSize = 16
+// tmp
+const StructMetaInfoSize = 20
 
 //const Int64Size = table.INT64.Size()
 const Int64Size = 8
@@ -74,6 +75,11 @@ func (p *DataPage) AddRecord(r []byte) error {
 		return errors.New("record size is wrong")
 	}
 
+	fmt.Println("AddRecord")
+	fmt.Println(r)
+	fmt.Println(len(p.data))
+	fmt.Println(len(r))
+
 	for i := 0; i < int(p.recordSize); i++ {
 		p.data[p.numRecords*p.recordSize+int64(i)] = r[i]
 	}
@@ -93,6 +99,12 @@ func (p *DataPage) AddRecord(r []byte) error {
 
 func (p *DataPage) ReadRecord(ridx int64) []byte {
 	off := ridx * p.recordSize
+
+	fmt.Println("ReadRecord")
+	fmt.Println(off)
+	fmt.Println((off + p.recordSize))
+	fmt.Println(len(p.data))
+
 	return p.data[off:(off + p.recordSize)]
 }
 
@@ -127,7 +139,7 @@ func (p *DataPage) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	tmp := make([]byte, p.recordSize)
+	tmp := make([]byte, FreeSpaceSize)
 	if err := binary.Read(buf, binary.LittleEndian, &tmp); err != nil {
 		return err
 	}

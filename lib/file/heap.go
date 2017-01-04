@@ -42,6 +42,7 @@ func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 	// Traverse the linked list of pages.
 	p := &page.DataPage{}
 	next := pid
+
 	for next != -1 {
 
 		// Read the page.
@@ -52,7 +53,8 @@ func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 
 		// Read records.
 		for i := 0; i < int(p.NumRecords()); i++ {
-			rec, err := f.schema.DeserializeRecord(p.ReadRecord(int64(i)))
+			tmp := p.ReadRecord(int64(i))
+			rec, err := f.schema.DeserializeRecord(tmp)
 			if err != nil {
 				return nil, err
 			}
@@ -68,25 +70,24 @@ func (f *HeapFile) Scan(pid int64) ([]*table.Record, error) {
 // Insert inserts a record into the page.
 func (f *HeapFile) Insert(pid int64, record *table.Record) error {
 
-	p := &page.DataPage{}
+	fmt.Println("Insert")
+	fmt.Println(pid)
 
-	err := f.bm.Read(pid, p)
+	serialized, err := f.schema.SerializeRecord(record)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("**********************")
-	fmt.Println(record.Values())
-	fmt.Println(record.Values()[0])
-	fmt.Println(record.Values()[1])
+	p := &page.DataPage{}
+
+	err = f.bm.Read(pid, p)
+	if err != nil {
+		return err
+	}
 
 	// Insert the record into this page.
 	if p.HasFreeSpace() {
-		b, err := f.schema.SerializeRecord(record)
-		if err != nil {
-			return err
-		}
-		p.AddRecord(b)
+		p.AddRecord(serialized)
 		f.bm.Update(p.Pid(), p)
 		return nil
 	}
@@ -98,11 +99,7 @@ func (f *HeapFile) Insert(pid int64, record *table.Record) error {
 
 	// Create the new page and insert the record into it.
 	newPage := page.NewDataPage(-1, p.Pid(), -1, f.schema.RecordSize())
-	b, err := f.schema.SerializeRecord(record)
-	if err != nil {
-		return err
-	}
-	newPage.AddRecord(b)
+	newPage.AddRecord(serialized)
 	newPid, err := f.bm.Create(newPage)
 	if err != nil {
 		return err

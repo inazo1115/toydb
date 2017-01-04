@@ -1,7 +1,7 @@
 package table
 
 import (
-	"fmt"
+	//"fmt"
 	"errors"
 
 	"github.com/inazo1115/toydb/lib/util"
@@ -42,8 +42,6 @@ func (s *Schema) SerializeRecord(r *Record) ([]byte, error) {
 		}
 
 		b := col.SerializeValue(val)
-		fmt.Println("SerializeValue")
-		fmt.Println(b)
 		for j := 0; j < len(b); j++ {
 			ret[idx] = b[j]
 			idx++

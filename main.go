@@ -20,6 +20,7 @@ func main() {
 	log("start")
 
 	// Init
+
 	cols := make([]*table.Column, 2)
 	cols[0] = table.NewColumnString("name")
 	cols[1] = table.NewColumnInt64("age")
@@ -29,7 +30,7 @@ func main() {
 	rootPid := hf.RootPid()
 
 	// Insert
-	for i := 0; i < 500; i++ {
+	for i := 0; i < 300; i++ {
 		vals := make([]*table.Value, 2)
 		vals[0] = table.NewValueString(fmt.Sprintf("name%d", i))
 		vals[1] = table.NewValueInt64(int64(i))
@@ -44,11 +45,15 @@ func main() {
 	hf.WriteBackAll()
 
 	// Scan
-	/*res, err := hf.Scan(int64(rootPid))
+	res, err := hf.Scan(int64(rootPid))
 	if err != nil {
+		debug.PrintStack()
 		panic(err)
 	}
-	log(res)*/
+
+	for i := 0; i < len(res); i++ {
+		log(res[i].Values()[1])
+	}
 
 	log("end")
 }
