@@ -9,11 +9,8 @@ import (
 	"github.com/inazo1115/toydb/lib/pkg"
 )
 
-// tmp
-const StructMetaInfoSize = 20
-
-//const Int64Size = table.INT64.Size()
 const Int64Size = 8
+const StructMetaInfoSize = 20 // 20 is an uncertain value.
 const FieldValueSize = Int64Size * 5
 const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + FieldValueSize)
 
