@@ -1,10 +1,12 @@
 package storage
 
 import (
+	//"fmt"
 	"os"
 	"testing"
 
 	"github.com/inazo1115/toydb/lib/page"
+	"github.com/inazo1115/toydb/lib/util"
 )
 
 // TestCreateAndRead_0 tests that BufferManager can create a new page and read
@@ -15,11 +17,17 @@ func TestCreateAndRead_0(t *testing.T) {
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
 	dataFile = "lru_test_TestCreateAndRead_0.tmp"
+	recordSize := 10
+	data := make([]byte, recordSize)
 	message := "test"
+	util.CopyStrToByte(message, data)
 
 	// Create a page.
-	p0 := page.NewDataPage(-1, -1, -1)
-	p0.AddRecord([]byte(message))
+	p0 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	err := p0.AddRecord(data)
+	if err != nil {
+		t.Errorf("AddRecord failed.")
+	}
 	pid, err := bm.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")
@@ -50,27 +58,39 @@ func TestCreateAndRead_1(t *testing.T) {
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
 	dataFile = "lru_test_TestCreateAndRead_1.tmp"
+	recordSize := 10
+	data := make([]byte, recordSize)
 	message := "test"
+	util.CopyStrToByte(message, data)
 
 	// Create a page.
-	p0 := page.NewDataPage(-1, -1, -1)
-	p0.AddRecord([]byte(message))
+	p0 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	p0.AddRecord(data)
 	pid, err := bm.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")
 	}
-	p1 := page.NewDataPage(-1, -1, -1)
-	p1.AddRecord([]byte("foo"))
+
+	p1 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	data = make([]byte, recordSize)
+	util.CopyStrToByte("foo", data)
+	p1.AddRecord(data)
 	if _, err := bm.Create(p1); err != nil {
 		t.Errorf("Create failed.")
 	}
-	p2 := page.NewDataPage(-1, -1, -1)
-	p2.AddRecord([]byte("foofoo"))
+
+	p2 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	data = make([]byte, recordSize)
+	util.CopyStrToByte("foofoo", data)
+	p2.AddRecord(data)
 	if _, err := bm.Create(p2); err != nil {
 		t.Errorf("Create failed.")
 	}
-	p3 := page.NewDataPage(-1, -1, -1)
-	p3.AddRecord([]byte("foofoofoo"))
+
+	p3 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	data = make([]byte, recordSize)
+	util.CopyStrToByte("foofoofoo", data)
+	p3.AddRecord(data)
 	if _, err := bm.Create(p3); err != nil {
 		t.Errorf("Create failed.")
 	}
@@ -99,19 +119,24 @@ func TestUpdate(t *testing.T) {
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
 	dataFile = "lru_test_TestUpdate.tmp"
-	message := "test"
+	recordSize := 10
 
 	// Create a page.
-	p0 := page.NewDataPage(-1, -1, -1)
-	p0.AddRecord([]byte("foo"))
+	p0 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	data := make([]byte, recordSize)
+	util.CopyStrToByte("foo", data)
+	p0.AddRecord(data)
 	pid, err := bm.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
 	// Update a page.
-	p1 := page.NewDataPage(-1, -1, -1)
-	p1.AddRecord([]byte(message))
+	p1 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	data = make([]byte, recordSize)
+	message := "test"
+	util.CopyStrToByte(message, data)
+	p1.AddRecord(data)
 	if err = bm.Update(pid, p1); err != nil {
 		t.Errorf("Create failed.")
 	}
@@ -141,11 +166,14 @@ func TestWriteBackAll(t *testing.T) {
 	bm1 := NewBufferManager() // Do read process
 	bufferPoolSize_ = 3
 	dataFile = "lru_test_TestWriteBackAll.tmp"
+	recordSize := 10
+	data := make([]byte, recordSize)
 	message := "test"
+	util.CopyStrToByte(message, data)
 
 	// Create a page.
-	p0 := page.NewDataPage(-1, -1, -1)
-	p0.AddRecord([]byte(message))
+	p0 := page.NewDataPage(-1, -1, -1, int64(recordSize))
+	p0.AddRecord(data)
 	pid, err := bm0.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")

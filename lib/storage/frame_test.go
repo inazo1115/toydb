@@ -7,12 +7,12 @@ import (
 )
 
 func TestFramePage(t *testing.T) {
-	p0 := page.NewDataPage(-1, -1, -1)
+	p0 := page.NewDataPage(-1, -1, -1, 10)
 	f := NewFrame(p0)
 	if f.Page() != p0 {
 		t.Errorf("NewFrame failed.")
 	}
-	p1 := page.NewDataPage(-1, -1, -1)
+	p1 := page.NewDataPage(-1, -1, -1, 10)
 	f.SetPage(p1)
 	if f.Page() != p1 {
 		t.Errorf("SetFrame failed.")

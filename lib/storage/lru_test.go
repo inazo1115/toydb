@@ -17,19 +17,19 @@ func TestTouchPage_0(t *testing.T) {
 	dataFile = "lru_test_TestTouchPage_0.tmp"
 
 	// Page accesses.
-	p0 := page.NewDataPage(-1, -1, -1)
+	p0 := page.NewDataPage(-1, -1, -1, 10)
 	pid0, err := bm.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
-	p1 := page.NewDataPage(-1, -1, -1)
+	p1 := page.NewDataPage(-1, -1, -1, 10)
 	pid1, err := bm.Create(p1)
 	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
-	p2 := page.NewDataPage(-1, -1, -1)
+	p2 := page.NewDataPage(-1, -1, -1, 10)
 	pid2, err := bm.Create(p2)
 	if err != nil {
 		t.Errorf("Create failed.")
@@ -68,7 +68,7 @@ func TestTouchPage_1(t *testing.T) {
 	dataFile = "lru_test_TestTouchPage_1.tmp"
 
 	// Page accesses.
-	p0 := page.NewDataPage(-1, -1, -1)
+	p0 := page.NewDataPage(-1, -1, -1, 10)
 	pid, err := bm.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")
@@ -104,19 +104,19 @@ func TestChooseVictim(t *testing.T) {
 	dataFile = "lru_test_TestChooseVictim.tmp"
 
 	// Page accesses.
-	p0 := page.NewDataPage(-1, -1, -1)
+	p0 := page.NewDataPage(-1, -1, -1, 10)
 	pid0, err := bm.Create(p0)
 	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
-	p1 := page.NewDataPage(-1, -1, -1)
+	p1 := page.NewDataPage(-1, -1, -1, 10)
 	pid1, err := bm.Create(p1)
 	if err != nil {
 		t.Errorf("Create failed.")
 	}
 
-	p2 := page.NewDataPage(-1, -1, -1)
+	p2 := page.NewDataPage(-1, -1, -1, 10)
 	pid2, err := bm.Create(p2)
 	if err != nil {
 		t.Errorf("Create failed.")
