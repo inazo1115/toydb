@@ -14,7 +14,11 @@ func TestSerdeInt64(t *testing.T) {
 
 func TestSerdeString(t *testing.T) {
 	expected := "test"
-	actual := DeserializeString(SerializeString(expected))
+
+	ser := SerializeString(expected, int64(len(expected)))
+	de := DeserializeString(ser, int64(len(expected)))
+
+	actual := de
 	if actual != expected {
 		t.Errorf("actual: %s doesn't equals expected: %s.", actual, expected)
 	}
