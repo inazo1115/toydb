@@ -31,6 +31,7 @@ func (dm *DiskManager) Read(pid int64, buf []byte) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	_, err = file.ReadAt(buf, pid*blockSize)
 	if err != nil {
@@ -47,6 +48,7 @@ func (dm *DiskManager) Write(pid int64, data []byte) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	_, err = file.WriteAt(data, pid*blockSize)
 	if err != nil {
@@ -63,6 +65,7 @@ func (dm *DiskManager) GetFreePageID(used []int64) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
@@ -93,6 +96,7 @@ func (dm *DiskManager) GetBufferSize(pid int64) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	defer file.Close()
 
 	stat, err := file.Stat()
 	if err != nil {
@@ -124,6 +128,7 @@ func (dm *DiskManager) Dump(pid int64) {
 	if err != nil {
 		panic(err)
 	}
+	defer file.Close()
 
 	buf := make([]byte, blockSize)
 	_, err = file.ReadAt(buf, pid*blockSize)
