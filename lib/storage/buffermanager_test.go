@@ -16,7 +16,7 @@ func TestCreateAndRead_0(t *testing.T) {
 	// Setup.
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestCreateAndRead_0.tmp"
+	DataFile = "lru_test_TestCreateAndRead_0.tmp"
 	recordSize := 10
 	data := make([]byte, recordSize)
 	message := "test"
@@ -47,7 +47,7 @@ func TestCreateAndRead_0(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestCreateAndRead_1 tests that BufferManager can create new pages which of
@@ -57,7 +57,7 @@ func TestCreateAndRead_1(t *testing.T) {
 	// Setup.
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestCreateAndRead_1.tmp"
+	DataFile = "lru_test_TestCreateAndRead_1.tmp"
 	recordSize := 10
 	data := make([]byte, recordSize)
 	message := "test"
@@ -109,7 +109,7 @@ func TestCreateAndRead_1(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestUpdate tests that BufferManager can update a page.
@@ -118,7 +118,7 @@ func TestUpdate(t *testing.T) {
 	// Setup.
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestUpdate.tmp"
+	DataFile = "lru_test_TestUpdate.tmp"
 	recordSize := 10
 
 	// Create a page.
@@ -155,7 +155,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestWriteBackAll tests that BufferManager can write a page back to disk.
@@ -165,7 +165,7 @@ func TestWriteBackAll(t *testing.T) {
 	bm0 := NewBufferManager() // Do write process
 	bm1 := NewBufferManager() // Do read process
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestWriteBackAll.tmp"
+	DataFile = "lru_test_TestWriteBackAll.tmp"
 	recordSize := 10
 	data := make([]byte, recordSize)
 	message := "test"
@@ -202,5 +202,5 @@ func TestWriteBackAll(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }

@@ -14,7 +14,7 @@ func TestTouchPage_0(t *testing.T) {
 	// Setup.
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestTouchPage_0.tmp"
+	DataFile = "lru_test_TestTouchPage_0.tmp"
 
 	// Page accesses.
 	p0 := page.NewDataPage(-1, -1, -1, 10)
@@ -55,7 +55,7 @@ func TestTouchPage_0(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestTouchPage_0 tests frame's hit count. The access pattern is to read one
@@ -65,7 +65,7 @@ func TestTouchPage_1(t *testing.T) {
 	// Setup.
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestTouchPage_1.tmp"
+	DataFile = "lru_test_TestTouchPage_1.tmp"
 
 	// Page accesses.
 	p0 := page.NewDataPage(-1, -1, -1, 10)
@@ -92,7 +92,7 @@ func TestTouchPage_1(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestChooseVictim tests the logic that selects the eviction target.
@@ -101,7 +101,7 @@ func TestChooseVictim(t *testing.T) {
 	// Setup.
 	bm := NewBufferManager()
 	bufferPoolSize_ = 3
-	dataFile = "lru_test_TestChooseVictim.tmp"
+	DataFile = "lru_test_TestChooseVictim.tmp"
 
 	// Page accesses.
 	p0 := page.NewDataPage(-1, -1, -1, 10)
@@ -148,5 +148,5 @@ func TestChooseVictim(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }

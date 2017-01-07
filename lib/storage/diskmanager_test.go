@@ -11,7 +11,7 @@ func TestWriteAndRead(t *testing.T) {
 
 	// Setup.
 	dm := NewDiskManager()
-	dataFile = "diskmanager_test_TestWriteAndRead.tmp"
+	DataFile = "diskmanager_test_TestWriteAndRead.tmp"
 	expected := "this is the test message."
 
 	// Write.
@@ -36,7 +36,7 @@ func TestWriteAndRead(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestGetFreePageID_0 tests that DiskManager returns first page id(0) when
@@ -45,7 +45,7 @@ func TestGetFreePageID_0(t *testing.T) {
 
 	// Setup.
 	dm := NewDiskManager()
-	dataFile = "diskmanager_test_TestGetFreePageID_0.tmp"
+	DataFile = "diskmanager_test_TestGetFreePageID_0.tmp"
 	expected := int64(0)
 
 	// Get the page id.
@@ -61,7 +61,7 @@ func TestGetFreePageID_0(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestGetFreePageID_1 tests that DiskManager returns next of the maximum page
@@ -70,7 +70,7 @@ func TestGetFreePageID_1(t *testing.T) {
 
 	// Setup.
 	dm := NewDiskManager()
-	dataFile = "diskmanager_test_TestGetFreePageID_1.tmp"
+	DataFile = "diskmanager_test_TestGetFreePageID_1.tmp"
 	expected := int64(5)
 
 	// Get the page id.
@@ -87,7 +87,7 @@ func TestGetFreePageID_1(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestGetFreePageID_2 tests that DiskManager returns next of the maximum page
@@ -96,7 +96,7 @@ func TestGetFreePageID_2(t *testing.T) {
 
 	// Setup.
 	dm := NewDiskManager()
-	dataFile = "diskmanager_test_TestGetFreePageID_2.tmp"
+	DataFile = "diskmanager_test_TestGetFreePageID_2.tmp"
 	expected := int64(1)
 
 	// Write.
@@ -117,7 +117,7 @@ func TestGetFreePageID_2(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestGetBufferSize_0 tests that DiskManager returns the buffer size. When the
@@ -127,7 +127,7 @@ func TestGetBufferSize_0(t *testing.T) {
 
 	// Setup.
 	dm := NewDiskManager()
-	dataFile = "diskmanager_test_TestGetBufferSize_0.tmp"
+	DataFile = "diskmanager_test_TestGetBufferSize_0.tmp"
 	message := "this is the test message."
 	expected := int64(len(message))
 
@@ -149,7 +149,7 @@ func TestGetBufferSize_0(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }
 
 // TestGetBufferSize_1 tests that DiskManager returns the buffer size. When the
@@ -159,7 +159,7 @@ func TestGetBufferSize_1(t *testing.T) {
 
 	// Setup.
 	dm := NewDiskManager()
-	dataFile = "diskmanager_test_TestGetBufferSize_1.tmp"
+	DataFile = "diskmanager_test_TestGetBufferSize_1.tmp"
 	message := "this is the test message."
 	expected := int64(4096) // It's the block size.
 
@@ -184,5 +184,5 @@ func TestGetBufferSize_1(t *testing.T) {
 	}
 
 	// Teardown.
-	os.Remove(dataFile)
+	os.Remove(DataFile)
 }

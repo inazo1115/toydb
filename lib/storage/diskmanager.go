@@ -11,7 +11,7 @@ import (
 // Receivers of the package parameter. To aim for convenience of DI.
 var (
 	blockSize = int64(pkg.BlockSize)
-	dataFile  = string(pkg.DataFile)
+	DataFile  = string(pkg.DataFile)
 )
 
 // DiskManager deals random access files provided by OS. DiskManager calls
@@ -113,7 +113,7 @@ func (dm *DiskManager) GetBufferSize(pid int64) (int64, error) {
 // getFile returns pointer to file.
 func (dm *DiskManager) getFile() (*os.File, error) {
 
-	file, err := os.OpenFile(dataFile, os.O_CREATE|os.O_RDWR, 0660)
+	file, err := os.OpenFile(DataFile, os.O_CREATE|os.O_RDWR, 0660)
 	if err != nil {
 		return nil, err
 	}
