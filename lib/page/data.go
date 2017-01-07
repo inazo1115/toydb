@@ -7,11 +7,11 @@ import (
 	//"fmt"
 
 	"github.com/inazo1115/toydb/lib/pkg"
+	"github.com/inazo1115/toydb/lib/table"
 )
 
-const Int64Size = 8
 const StructMetaInfoSize = 20 // 20 is an uncertain value.
-const FieldValueSize = Int64Size * 5
+const FieldValueSize = table.INT64Size * 5
 const FreeSpaceSize = pkg.BlockSize - (StructMetaInfoSize + FieldValueSize)
 
 type DataPage struct {
