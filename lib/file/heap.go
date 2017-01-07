@@ -2,7 +2,7 @@ package file
 
 import (
 	"errors"
-	"fmt"
+	//"fmt"
 
 	"github.com/inazo1115/toydb/lib/page"
 	"github.com/inazo1115/toydb/lib/storage"
@@ -29,6 +29,17 @@ func NewHeapFile(bm *storage.BufferManager, schema *table.Schema) *HeapFile {
 	return &HeapFile{rootPid, bm, schema}
 }
 
+// RootPid is a getter of the root page id.
+func (f *HeapFile) RootPid() int64 {
+	return f.rootPid
+}
+
+// RootPid is a getter of the buffer manager.
+func (f *HeapFile) BufferManager() *storage.BufferManager {
+	return f.bm
+}
+
+// Schema is a getter of the schema.
 func (f *HeapFile) Schema() *table.Schema {
 	return f.schema
 }
@@ -117,38 +128,17 @@ func (f *HeapFile) Insert(record *table.Record) error {
 	return nil
 }
 
-// Dump is a debug function.
-func (f *HeapFile) Dump(pid int64) {
-
-	p := &page.DataPage{}
-
-	var err error
-	err = f.bm.Read(pid, p)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("dump")
-	fmt.Println(pid)
-	fmt.Println(p)
-}
-
+// TODO: impl
 func SearchEq(rootPid int64) error {
 	return errors.New("not implemented")
 }
 
+// TODO: impl
 func SearchRange(rootPid int64) error {
 	return errors.New("not implemented")
 }
 
+// TODO: impl
 func Delete(rootPid int64) error {
 	return errors.New("not implemented")
-}
-
-func (f *HeapFile) WriteBackAll() error {
-	err := f.bm.WriteBackAll()
-	if err != nil {
-		return err
-	}
-	return nil
 }
