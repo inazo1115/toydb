@@ -2,113 +2,167 @@ package query
 
 import (
 	"errors"
-	"fmt"
+	//"fmt"
 )
 
-type AST interface {
-	Eval() error
-	Inspect(key string) string
+var (
+	ParseError = errors.New("ParseError")
+)
+
+type ASTNode struct {
+	Token    LexToken
+	Children []*ASTNode
 }
 
-type ASTCreateTable struct {
-	table string
-	keys  []LexToken
-	types []ColumnType
+func NewASTNode(token LexToken) *ASTNode {
+	return &ASTNode{token, make([]*ASTNode, 0)}
 }
 
-type ASTInsert struct {
-	table  string
-	cols   []string
-	values []string
+func (n *ASTNode) AppendChild(node *ASTNode) {
+	n.Children = append(n.Children, node)
 }
 
-type ASTSelect struct {
-	name  string
-	isAll bool
-	cols  []string
-	limit int
-}
-
-type ColumnType struct {
-	id   LexTokenID
-	meta map[string]string
-}
-
-func (ast ASTCreateTable) Eval() error {
-	return errors.New("")
-}
-
-func (ast ASTCreateTable) Inspect(key string) string {
-	switch key {
-	case "table":
-		return fmt.Sprintf("%v", ast.table)
-	case "keys":
-		return fmt.Sprintf("%v", ast.keys)
-	case "types":
-		return fmt.Sprintf("%v", ast.types)
-	default:
-		panic("foo")
-	}
-}
-
-func Parse(tokens []LexToken) (AST, error) {
+func Parse(tokens []LexToken) (*ASTNode, error) {
 	switch {
 	case tokens[0].ID == TokenCREATE && tokens[1].ID == TokenTABLE:
 		return ParseCreateTable(tokens)
 	case tokens[0].ID == TokenINSERT:
-		return ASTCreateTable{}, ParseError
-		//return ParseInsert(tokens)
+		return ParseInsert(tokens)
 	case tokens[0].ID == TokenSELECT:
-		return ASTCreateTable{}, ParseError
-		//return ParseSelect(tokens)
+		return ParseSelect(tokens)
 	default:
-		return ASTCreateTable{}, ParseError
+		return nil, ParseError
 	}
 }
 
-func ParseCreateTable(tokens []LexToken) (ASTCreateTable, error) {
+func ParseCreateTable(tokens []LexToken) (*ASTNode, error) {
 
-	table := tokens[2].Val
-	keys := make([]LexToken, 0)
-	types := make([]ColumnType, 0)
+	root := NewASTNode(tokens[0])
+
+	if tokens[2].ID != TokenKEY {
+		return nil, ParseError
+	}
+
+	table := NewASTNode(tokens[2])
+	root.AppendChild(table)
+
+	if tokens[3].ID != TokenLPAREN {
+		return nil, ParseError
+	}
 
 	for i := 4; i < len(tokens); i++ {
-
-		if tokens[i].ID == TokenLPAREN || tokens[i].ID == TokenCOMMA {
-			continue
-		}
 
 		if tokens[i].ID == TokenRPAREN {
 			break
 		}
 
-		if tokens[i].ID != TokenKEY {
-			return ASTCreateTable{}, ParseError
+		if tokens[i].ID == TokenCOMMA {
+			continue
 		}
-		keys = append(keys, tokens[i])
+
+		if tokens[i].ID != TokenKEY {
+			return nil, ParseError
+		}
+
+		root.AppendChild(NewASTNode(tokens[i]))
 
 		i++
 
 		switch tokens[i].ID {
 		case TokenINT:
-			types = append(types, ColumnType{tokens[i].ID, map[string]string{}})
+			root.AppendChild(NewASTNode(tokens[i]))
 		case TokenSTRING:
 			if !(tokens[i+1].ID == TokenLPAREN &&
 				tokens[i+2].ID == TokenVALUE &&
 				tokens[i+3].ID == TokenRPAREN) {
-				return ASTCreateTable{}, ParseError
+				return nil, ParseError
 			}
-			meta := map[string]string{
-				"size": tokens[i+2].Val,
-			}
-			types = append(types, ColumnType{tokens[i].ID, meta})
+			str := NewASTNode(tokens[i])
+			size := NewASTNode(tokens[i+2])
+			str.AppendChild(size)
+			root.AppendChild(str)
+
 			i += 3
 		}
 	}
 
-	return ASTCreateTable{table, keys, types}, nil
+	return root, nil
 }
 
-var (
-	ParseError = errors.New("ParseError")
-)
+func ParseInsert(tokens []LexToken) (*ASTNode, error) {
+
+	root := NewASTNode(tokens[0])
+
+	if tokens[1].ID != TokenINTO {
+		return nil, ParseError
+	}
+
+	table := NewASTNode(tokens[2])
+	root.AppendChild(table)
+
+	if tokens[3].ID != TokenLPAREN {
+		return nil, ParseError
+	}
+
+	size := 0
+	for i := 4; i < len(tokens); i++ {
+
+		if tokens[i].ID == TokenRPAREN {
+			break
+		}
+
+		if tokens[i].ID == TokenCOMMA {
+			continue
+		}
+
+		if tokens[i].ID != TokenKEY {
+			return nil, ParseError
+		}
+
+		size++
+	}
+
+	for i := 0; i < size; i++ {
+
+		col := NewASTNode(tokens[(i*2)+4])
+		val := NewASTNode(tokens[(i*2)+4+(size*2)+2])
+
+		if col.Token.ID != TokenKEY {
+			return nil, ParseError
+		}
+		if val.Token.ID != TokenVALUE {
+			return nil, ParseError
+		}
+
+		col.AppendChild(val)
+		root.AppendChild(col)
+	}
+
+	return root, nil
+}
+
+func ParseSelect(tokens []LexToken) (*ASTNode, error) {
+
+	root := NewASTNode(tokens[0])
+
+	table := NewASTNode(tokens[len(tokens)-1])
+	root.AppendChild(table)
+
+	if tokens[len(tokens)-2].ID != TokenFROM {
+		return nil, ParseError
+	}
+
+	for i := 1; i < len(tokens)-2; i++ {
+
+		if tokens[i].ID == TokenCOMMA {
+			continue
+		}
+
+		if !(tokens[i].ID == TokenTIMES || tokens[i].ID == TokenKEY) {
+			return nil, ParseError
+		}
+		root.AppendChild(NewASTNode(tokens[i]))
+	}
+
+	return root, nil
+}
