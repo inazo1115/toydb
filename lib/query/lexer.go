@@ -1,8 +1,8 @@
 package query
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	//"unicode/utf8"
 )
 
@@ -58,7 +58,7 @@ var keywordMap = map[string]LexTokenID{
 
 	// Type
 	"string": TokenSTRING,
-	"int":  TokenINT,
+	"int":    TokenINT,
 }
 
 var symbolMap = map[string]LexTokenID{
@@ -133,7 +133,7 @@ func lexToken(s string) (LexToken, error) {
 		return lexSymbol(s), nil
 
 	default:
-		return LexToken{}, fmt.Errorf("lexToken: can't read token from %s", s)
+		return LexToken{}, fmt.Errorf("lexToken: can't read token from %s, %s", s, s[0])
 	}
 }
 

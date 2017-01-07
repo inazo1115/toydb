@@ -29,6 +29,10 @@ func NewHeapFile(bm *storage.BufferManager, schema *table.Schema) *HeapFile {
 	return &HeapFile{rootPid, bm, schema}
 }
 
+func (f *HeapFile) Schema() *table.Schema {
+	return f.schema
+}
+
 // Scan scans all records. The traversing begins from given page id.
 func (f *HeapFile) Scan() ([]*table.Record, error) {
 

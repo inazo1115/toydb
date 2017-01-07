@@ -21,6 +21,15 @@ func (s *Schema) Columns() []*Column {
 	return s.cols
 }
 
+func (s *Schema) Type(colName string) (ToyDBType, error) {
+	for _, c := range s.cols {
+		if colName == c.Name() {
+			return c.Type(), nil
+		}
+	}
+	return -1, errors.New("column is not found")
+}
+
 func (s *Schema) RecordSize() int64 {
 	size := int64(0)
 	for _, c := range s.cols {
