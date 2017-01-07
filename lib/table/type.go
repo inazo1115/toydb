@@ -3,7 +3,7 @@ package table
 type ToyDBType int
 
 const (
-	INT64 = iota
+	INT64 ToyDBType = iota
 	STRING
 )
 
