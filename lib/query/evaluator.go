@@ -6,31 +6,33 @@ import (
 	"strconv"
 
 	"github.com/inazo1115/toydb/lib/file"
-	"github.com/inazo1115/toydb/lib/storage"
 	"github.com/inazo1115/toydb/lib/table"
 )
 
 type Evaluator struct {
-	bm     *storage.BufferManager
-	tables map[string]*file.HeapFile
+	runtime *Runtime
 }
 
-func NewEvaluator(bm *storage.BufferManager) *Evaluator {
-	return &Evaluator{bm, make(map[string]*file.HeapFile, 0)}
+func NewEvaluator() *Evaluator {
+	return &Evaluator{NewRuntime()}
 }
 
-func (e *Evaluator) Schema(name string) *table.Schema {
-	return e.tables[name].Schema()
+func (e *Evaluator) Runtime() *Runtime {
+	return e.runtime
 }
 
 func (e *Evaluator) Eval(ast *ASTNode) ([]*table.Record, error) {
+
 	switch {
 	case ast.Token.ID == TokenCREATE:
 		return nil, e.EvalCreateTable(ast)
+
 	case ast.Token.ID == TokenINSERT:
 		return nil, e.EvalInsert(ast)
+
 	case ast.Token.ID == TokenSELECT:
 		return e.EvalSelect(ast)
+
 	}
 	return nil, errors.New("Eval")
 }
@@ -38,6 +40,7 @@ func (e *Evaluator) Eval(ast *ASTNode) ([]*table.Record, error) {
 func (e *Evaluator) EvalCreateTable(ast *ASTNode) error {
 
 	tableName := ast.Children[0].Token.Val
+	e.runtime.SetCurrentTableName(tableName) // tmp
 
 	cols := make([]*table.Column, 0)
 
@@ -62,8 +65,11 @@ func (e *Evaluator) EvalCreateTable(ast *ASTNode) error {
 		cols = append(cols, newCol)
 	}
 
-	schema := table.NewSchema(cols)
-	e.tables[tableName] = file.NewHeapFile(e.bm, schema)
+	s := table.NewSchema(cols)
+	f := file.NewHeapFile(e.runtime.BufferManager(), s)
+
+	e.runtime.SetSchema(tableName, s)
+	e.runtime.SetFile(tableName, f)
 
 	return nil
 }
@@ -71,6 +77,7 @@ func (e *Evaluator) EvalCreateTable(ast *ASTNode) error {
 func (e *Evaluator) EvalInsert(ast *ASTNode) error {
 
 	tableName := ast.Children[0].Token.Val
+	e.runtime.SetCurrentTableName(tableName) // tmp
 
 	vals := make([]*table.Value, 0)
 
@@ -80,7 +87,7 @@ func (e *Evaluator) EvalInsert(ast *ASTNode) error {
 		val := ast.Children[i].Children[0]
 
 		var newVal *table.Value
-		t, err := e.tables[tableName].Schema().Type(col.Token.Val)
+		t, err := e.runtime.CurrentSchema().Type(col.Token.Val)
 		if err != nil {
 			return err
 		}
@@ -98,16 +105,15 @@ func (e *Evaluator) EvalInsert(ast *ASTNode) error {
 	}
 
 	record := table.NewRecord(vals)
-	file := e.tables[tableName]
-	err := file.Insert(record)
-	if err != nil {
+	if err := e.runtime.CurrentFile().Insert(record); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (e *Evaluator) EvalSelect(ast *ASTNode) ([]*table.Record, error) {
 	tableName := ast.Children[0].Token.Val
-	file := e.tables[tableName]
-	return file.Scan()
+	e.runtime.SetCurrentTableName(tableName) // tmp
+	return e.runtime.CurrentFile().Scan()
 }
