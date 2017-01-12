@@ -18,13 +18,12 @@ func main() {
 		fmt.Printf("toydb> ")
 		q, err := reader.ReadString(';')
 		if err != nil {
-			// panic(err)
 			fmt.Println("exit.")
 			break
 		}
 
 		if err := c.Query(q); err != nil {
-			panic(err)
+			fmt.Printf("Error occured: %v\n", err)
 		}
 	}
 }
