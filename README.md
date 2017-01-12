@@ -1,6 +1,6 @@
 # toydb
 
-The toydb is a Relational Database Management System which isn't prectical.
+The toydb is a Relational Database Management System which is not practical but for my self-education.
 
 ## Unit test
 ```
