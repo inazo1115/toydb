@@ -4,47 +4,41 @@ import (
 	//"fmt"
 
 	"github.com/inazo1115/toydb/lib/file"
-	"github.com/inazo1115/toydb/lib/storage"
 	"github.com/inazo1115/toydb/lib/table"
 )
 
-type Runtime struct {
-	bm      *storage.BufferManager
-	curTbl  string
-	schemas map[string]*table.Schema  // tmp
-	files   map[string]*file.HeapFile // tmp
+type Context struct {
+	currentTable string
+	schemas      map[string]*table.Schema  // tmp
+	files        map[string]*file.HeapFile // tmp
 }
 
-func NewRuntime() *Runtime {
-	bm := storage.NewBufferManager()
-	return &Runtime{bm, "", make(map[string]*table.Schema),
-		make(map[string]*file.HeapFile)}
+func NewContext() *Context {
+	schemas := make(map[string]*table.Schema)
+	files := make(map[string]*file.HeapFile)
+	return &Context{"", schemas, files}
 }
 
-func (r *Runtime) BufferManager() *storage.BufferManager {
-	return r.bm
+func (c *Context) CurrentTable() string {
+	return c.currentTable
 }
 
-func (r *Runtime) CurrentTableName() string {
-	return r.curTbl
+func (c *Context) SetCurrentTable(name string) {
+	c.currentTable = name
 }
 
-func (r *Runtime) SetCurrentTableName(s string) {
-	r.curTbl = s
+func (c *Context) CurrentSchema() *table.Schema {
+	return c.schemas[c.currentTable]
 }
 
-func (r *Runtime) CurrentSchema() *table.Schema {
-	return r.schemas[r.curTbl]
+func (c *Context) SetSchema(name string, schema *table.Schema) {
+	c.schemas[name] = schema
 }
 
-func (r *Runtime) SetSchema(name string, schema *table.Schema) {
-	r.schemas[name] = schema
+func (c *Context) CurrentFile() *file.HeapFile {
+	return c.files[c.currentTable]
 }
 
-func (r *Runtime) CurrentFile() *file.HeapFile {
-	return r.files[r.curTbl]
-}
-
-func (r *Runtime) SetFile(name string, file *file.HeapFile) {
-	r.files[name] = file
+func (c *Context) SetFile(name string, file *file.HeapFile) {
+	c.files[name] = file
 }

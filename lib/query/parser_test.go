@@ -1,18 +1,12 @@
 package query
 
 import (
-	//"fmt"
 	"testing"
+
+	"github.com/inazo1115/toydb/lib/util"
 )
 
-func assert(t *testing.T, actual interface{}, expected interface{}) {
-	if actual != expected {
-		t.Errorf("actual: %v doesn't equals expected: %v.", actual, expected)
-	}
-}
-
 func TestParse0(t *testing.T) {
-
 	input := []LexToken{
 		LexToken{TokenCREATE, "create"},
 		LexToken{TokenTABLE, "table"},
@@ -32,33 +26,32 @@ func TestParse0(t *testing.T) {
 		LexToken{TokenRPAREN, ")"},
 	}
 
-	actual, err := Parse(input)
+	actual, err := NewParser().Parse(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
 
-	assert(t, actual.Token.ID, TokenCREATE)
-	assert(t, actual.Token.Val, "create")
-	assert(t, actual.Children[0].Token.ID, TokenKEY)
-	assert(t, actual.Children[0].Token.Val, "table_name")
-	assert(t, actual.Children[1].Token.ID, TokenKEY)
-	assert(t, actual.Children[1].Token.Val, "name")
-	assert(t, actual.Children[2].Token.ID, TokenSTRING)
-	assert(t, actual.Children[2].Token.Val, "string")
-	assert(t, actual.Children[2].Children[0].Token.ID, TokenVALUE)
-	assert(t, actual.Children[2].Children[0].Token.Val, "20")
-	assert(t, actual.Children[3].Token.ID, TokenKEY)
-	assert(t, actual.Children[3].Token.Val, "age")
-	assert(t, actual.Children[4].Token.ID, TokenINT)
-	assert(t, actual.Children[4].Token.Val, "int")
-	assert(t, actual.Children[5].Token.ID, TokenKEY)
-	assert(t, actual.Children[5].Token.Val, "tel")
-	assert(t, actual.Children[6].Token.ID, TokenINT)
-	assert(t, actual.Children[6].Token.Val, "int")
+	util.Assert(t, actual.Token.ID, TokenCREATE)
+	util.Assert(t, actual.Token.Val, "create")
+	util.Assert(t, actual.Children[0].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[0].Token.Val, "table_name")
+	util.Assert(t, actual.Children[1].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[1].Token.Val, "name")
+	util.Assert(t, actual.Children[2].Token.ID, TokenSTRING)
+	util.Assert(t, actual.Children[2].Token.Val, "string")
+	util.Assert(t, actual.Children[2].Children[0].Token.ID, TokenVALUE)
+	util.Assert(t, actual.Children[2].Children[0].Token.Val, "20")
+	util.Assert(t, actual.Children[3].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[3].Token.Val, "age")
+	util.Assert(t, actual.Children[4].Token.ID, TokenINT)
+	util.Assert(t, actual.Children[4].Token.Val, "int")
+	util.Assert(t, actual.Children[5].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[5].Token.Val, "tel")
+	util.Assert(t, actual.Children[6].Token.ID, TokenINT)
+	util.Assert(t, actual.Children[6].Token.Val, "int")
 }
 
 func TestParse1(t *testing.T) {
-
 	input := []LexToken{
 		LexToken{TokenINSERT, "insert"},
 		LexToken{TokenINTO, "into"},
@@ -80,31 +73,30 @@ func TestParse1(t *testing.T) {
 		LexToken{TokenRPAREN, ")"},
 	}
 
-	actual, err := Parse(input)
+	actual, err := NewParser().Parse(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
 
-	assert(t, actual.Token.ID, TokenINSERT)
-	assert(t, actual.Token.Val, "insert")
-	assert(t, actual.Children[0].Token.ID, TokenKEY)
-	assert(t, actual.Children[0].Token.Val, "table_name")
-	assert(t, actual.Children[1].Token.ID, TokenKEY)
-	assert(t, actual.Children[1].Token.Val, "name")
-	assert(t, actual.Children[1].Children[0].Token.ID, TokenVALUE)
-	assert(t, actual.Children[1].Children[0].Token.Val, "\"foofoo\"")
-	assert(t, actual.Children[2].Token.ID, TokenKEY)
-	assert(t, actual.Children[2].Token.Val, "age")
-	assert(t, actual.Children[2].Children[0].Token.ID, TokenVALUE)
-	assert(t, actual.Children[2].Children[0].Token.Val, "100")
-	assert(t, actual.Children[3].Token.ID, TokenKEY)
-	assert(t, actual.Children[3].Token.Val, "tel")
-	assert(t, actual.Children[3].Children[0].Token.ID, TokenVALUE)
-	assert(t, actual.Children[3].Children[0].Token.Val, "200")
+	util.Assert(t, actual.Token.ID, TokenINSERT)
+	util.Assert(t, actual.Token.Val, "insert")
+	util.Assert(t, actual.Children[0].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[0].Token.Val, "table_name")
+	util.Assert(t, actual.Children[1].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[1].Token.Val, "name")
+	util.Assert(t, actual.Children[1].Children[0].Token.ID, TokenVALUE)
+	util.Assert(t, actual.Children[1].Children[0].Token.Val, "\"foofoo\"")
+	util.Assert(t, actual.Children[2].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[2].Token.Val, "age")
+	util.Assert(t, actual.Children[2].Children[0].Token.ID, TokenVALUE)
+	util.Assert(t, actual.Children[2].Children[0].Token.Val, "100")
+	util.Assert(t, actual.Children[3].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[3].Token.Val, "tel")
+	util.Assert(t, actual.Children[3].Children[0].Token.ID, TokenVALUE)
+	util.Assert(t, actual.Children[3].Children[0].Token.Val, "200")
 }
 
 func TestParse2(t *testing.T) {
-
 	input := []LexToken{
 		LexToken{TokenSELECT, "select"},
 		LexToken{TokenTIMES, "*"},
@@ -112,15 +104,15 @@ func TestParse2(t *testing.T) {
 		LexToken{TokenKEY, "table_name"},
 	}
 
-	actual, err := Parse(input)
+	actual, err := NewParser().Parse(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
 
-	assert(t, actual.Token.ID, TokenSELECT)
-	assert(t, actual.Token.Val, "select")
-	assert(t, actual.Children[0].Token.ID, TokenKEY)
-	assert(t, actual.Children[0].Token.Val, "table_name")
-	assert(t, actual.Children[1].Token.ID, TokenTIMES)
-	assert(t, actual.Children[1].Token.Val, "*")
+	util.Assert(t, actual.Token.ID, TokenSELECT)
+	util.Assert(t, actual.Token.Val, "select")
+	util.Assert(t, actual.Children[0].Token.ID, TokenKEY)
+	util.Assert(t, actual.Children[0].Token.Val, "table_name")
+	util.Assert(t, actual.Children[1].Token.ID, TokenTIMES)
+	util.Assert(t, actual.Children[1].Token.Val, "*")
 }

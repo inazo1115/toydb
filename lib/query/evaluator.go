@@ -13,34 +13,27 @@ type Evaluator struct {
 	runtime *Runtime
 }
 
-func NewEvaluator() *Evaluator {
-	return &Evaluator{NewRuntime()}
+func NewEvaluator(runtime *Runtime) *Evaluator {
+	return &Evaluator{runtime}
 }
 
-func (e *Evaluator) Runtime() *Runtime {
-	return e.runtime
-}
-
-func (e *Evaluator) Eval(ast *ASTNode) ([]*table.Record, error) {
-
-	switch {
-	case ast.Token.ID == TokenCREATE:
-		return nil, e.EvalCreateTable(ast)
-
-	case ast.Token.ID == TokenINSERT:
-		return nil, e.EvalInsert(ast)
-
-	case ast.Token.ID == TokenSELECT:
-		return e.EvalSelect(ast)
-
+func (e *Evaluator) Eval(ast *ASTNode, ctx *Context) ([]*table.Record, error) {
+	switch ast.Token.ID {
+	case TokenCREATE:
+		return make([]*table.Record, 0), e.evalCreateTable(ast, ctx)
+	case TokenINSERT:
+		return make([]*table.Record, 0), e.evalInsert(ast, ctx)
+	case TokenSELECT:
+		return e.evalSelect(ast, ctx)
+	default:
+		return nil, errors.New("error: Eval")
 	}
-	return nil, errors.New("Eval")
 }
 
-func (e *Evaluator) EvalCreateTable(ast *ASTNode) error {
+func (e *Evaluator) evalCreateTable(ast *ASTNode, ctx *Context) error {
 
 	tableName := ast.Children[0].Token.Val
-	e.runtime.SetCurrentTableName(tableName) // tmp
+	ctx.SetCurrentTable(tableName) // tmp
 
 	cols := make([]*table.Column, 0)
 
@@ -68,16 +61,16 @@ func (e *Evaluator) EvalCreateTable(ast *ASTNode) error {
 	s := table.NewSchema(cols)
 	f := file.NewHeapFile(e.runtime.BufferManager(), s)
 
-	e.runtime.SetSchema(tableName, s)
-	e.runtime.SetFile(tableName, f)
+	ctx.SetSchema(tableName, s)
+	ctx.SetFile(tableName, f)
 
 	return nil
 }
 
-func (e *Evaluator) EvalInsert(ast *ASTNode) error {
+func (e *Evaluator) evalInsert(ast *ASTNode, ctx *Context) error {
 
 	tableName := ast.Children[0].Token.Val
-	e.runtime.SetCurrentTableName(tableName) // tmp
+	ctx.SetCurrentTable(tableName) // tmp
 
 	vals := make([]*table.Value, 0)
 
@@ -87,7 +80,7 @@ func (e *Evaluator) EvalInsert(ast *ASTNode) error {
 		val := ast.Children[i].Children[0]
 
 		var newVal *table.Value
-		t, err := e.runtime.CurrentSchema().Type(col.Token.Val)
+		t, err := ctx.CurrentSchema().Type(col.Token.Val)
 		if err != nil {
 			return err
 		}
@@ -105,15 +98,15 @@ func (e *Evaluator) EvalInsert(ast *ASTNode) error {
 	}
 
 	record := table.NewRecord(vals)
-	if err := e.runtime.CurrentFile().Insert(record); err != nil {
+	if err := ctx.CurrentFile().Insert(record); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (e *Evaluator) EvalSelect(ast *ASTNode) ([]*table.Record, error) {
+func (e *Evaluator) evalSelect(ast *ASTNode, ctx *Context) ([]*table.Record, error) {
 	tableName := ast.Children[0].Token.Val
-	e.runtime.SetCurrentTableName(tableName) // tmp
-	return e.runtime.CurrentFile().Scan()
+	ctx.SetCurrentTable(tableName) // tmp
+	return ctx.CurrentFile().Scan()
 }
