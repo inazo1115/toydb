@@ -3,7 +3,6 @@ package query
 import (
 	"bytes"
 	"fmt"
-	//"unicode/utf8"
 )
 
 //
@@ -92,7 +91,14 @@ var symbolChars = []byte{
 // Lexer
 //
 
-func Lex(query string) ([]LexToken, error) {
+type Lexer struct {
+}
+
+func NewLexer() *Lexer {
+	return &Lexer{}
+}
+
+func (l *Lexer) Lex(query string) ([]LexToken, error) {
 
 	var token LexToken
 	var err error
@@ -133,7 +139,7 @@ func lexToken(s string) (LexToken, error) {
 		return lexSymbol(s), nil
 
 	default:
-		return LexToken{}, fmt.Errorf("lexToken: can't read token from %s, %s", s, s[0])
+		return LexToken{}, fmt.Errorf("lexToken: can't read token '%s' from %s", s[0], s)
 	}
 }
 

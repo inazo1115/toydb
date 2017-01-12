@@ -25,10 +25,12 @@ func TestLex0(t *testing.T) {
 		LexToken{TokenINT, "int"},
 		LexToken{TokenRPAREN, ")"},
 	}
-	actual, err := Lex(input)
+	actual, err := NewLexer().Lex(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
+
+	// Assert.
 	if len(actual) != len(expected) {
 		t.Errorf("actual: %v doesn't equals expected: %v.", actual, expected)
 	}
@@ -40,7 +42,6 @@ func TestLex0(t *testing.T) {
 }
 
 func TestLex1(t *testing.T) {
-
 	input := "insert into table_name (name, age, tel) values (\"foofoo\", 100, 200)"
 	expected := []LexToken{
 		LexToken{TokenINSERT, "insert"},
@@ -62,10 +63,12 @@ func TestLex1(t *testing.T) {
 		LexToken{TokenVALUE, "200"},
 		LexToken{TokenRPAREN, ")"},
 	}
-	actual, err := Lex(input)
+	actual, err := NewLexer().Lex(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
+
+	// Assert.
 	if len(actual) != len(expected) {
 		t.Errorf("actual: %v doesn't equals expected: %v.", actual, expected)
 	}
@@ -77,7 +80,6 @@ func TestLex1(t *testing.T) {
 }
 
 func TestLex2(t *testing.T) {
-
 	input := "select * from table_name"
 	expected := []LexToken{
 		LexToken{TokenSELECT, "select"},
@@ -85,10 +87,12 @@ func TestLex2(t *testing.T) {
 		LexToken{TokenFROM, "from"},
 		LexToken{TokenKEY, "table_name"},
 	}
-	actual, err := Lex(input)
+	actual, err := NewLexer().Lex(input)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
+
+	// Assert.
 	if len(actual) != len(expected) {
 		t.Errorf("actual: %v doesn't equals expected: %v.", actual, expected)
 	}
