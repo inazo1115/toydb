@@ -1,7 +1,6 @@
 package storage
 
 import (
-	//"fmt"
 	"os"
 	"testing"
 
@@ -42,9 +41,7 @@ func TestCreateAndRead_0(t *testing.T) {
 	// Assert.
 	actual := string(p1.Data()[:len(message)]) // TODO: len is a bad hack. fix it.
 	expected := message
-	if actual != expected {
-		t.Errorf("actual: %s doesn't equals expected: %s.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -104,9 +101,7 @@ func TestCreateAndRead_1(t *testing.T) {
 	// Assert.
 	actual := string(p.Data()[:len(message)]) // TODO: len is a bad hack. fix it.
 	expected := message
-	if actual != expected {
-		t.Errorf("actual: %s doesn't equals expected: %s.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -150,9 +145,7 @@ func TestUpdate(t *testing.T) {
 	// Assert.
 	actual := string(p2.Data()[:len(message)]) // TODO: len is a bad hack. fix it.
 	expected := message
-	if actual != expected {
-		t.Errorf("actual: %s doesn't equals expected: %s.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -197,9 +190,7 @@ func TestWriteBackAll(t *testing.T) {
 	// Assert.
 	actual := string(p2.Data()[:len(message)]) // TODO: len is a bad hack. fix it.
 	expected := message
-	if actual != expected {
-		t.Errorf("actual: %s doesn't equals expected: %s.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)

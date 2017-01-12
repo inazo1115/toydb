@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/inazo1115/toydb/lib/page"
+	"github.com/inazo1115/toydb/lib/util"
 )
 
 // TestTouchPage_0 tests frame's hit count. The access pattern is create new
@@ -38,21 +39,15 @@ func TestTouchPage_0(t *testing.T) {
 	// Assert.
 	actual := bm.bufferPool[bm.dict[pid0]].HitCount()
 	expected := int64(2)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	actual = bm.bufferPool[bm.dict[pid1]].HitCount()
 	expected = int64(1)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	actual = bm.bufferPool[bm.dict[pid2]].HitCount()
 	expected = int64(0)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -87,9 +82,7 @@ func TestTouchPage_1(t *testing.T) {
 	// Assert.
 	actual := bm.bufferPool[bm.dict[pid]].HitCount()
 	expected := int64(0)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -125,27 +118,19 @@ func TestChooseVictim(t *testing.T) {
 	// Assert.
 	actual := bm.cacheStrat.ChooseVictim(bm)
 	expected := int64(bm.dict[pid0])
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	actual = bm.bufferPool[bm.dict[pid0]].HitCount()
 	expected = int64(2)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	actual = bm.bufferPool[bm.dict[pid1]].HitCount()
 	expected = int64(1)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	actual = bm.bufferPool[bm.dict[pid2]].HitCount()
 	expected = int64(0)
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)

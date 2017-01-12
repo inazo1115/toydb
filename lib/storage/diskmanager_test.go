@@ -3,6 +3,8 @@ package storage
 import (
 	"os"
 	"testing"
+
+	"github.com/inazo1115/toydb/lib/util"
 )
 
 // TestWriteAndRead tests that DiskManager can write the message to the file and
@@ -31,9 +33,7 @@ func TestWriteAndRead(t *testing.T) {
 
 	// Assert.
 	actual := string(buf)
-	if actual != expected {
-		t.Errorf("actual: %s doesn't equals expected: %s", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -56,9 +56,7 @@ func TestGetFreePageID_0(t *testing.T) {
 
 	// Assert.
 	actual := pid
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -82,9 +80,7 @@ func TestGetFreePageID_1(t *testing.T) {
 
 	// Assert.
 	actual := pid
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -112,9 +108,7 @@ func TestGetFreePageID_2(t *testing.T) {
 
 	// Assert.
 	actual := pid
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -144,9 +138,7 @@ func TestGetBufferSize_0(t *testing.T) {
 
 	// Assert.
 	actual := size
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
@@ -179,9 +171,7 @@ func TestGetBufferSize_1(t *testing.T) {
 
 	// Assert.
 	actual := size
-	if actual != expected {
-		t.Errorf("actual: %d doesn't equals expected: %d.", actual, expected)
-	}
+	util.Assert(t, actual, expected)
 
 	// Teardown.
 	os.Remove(DataFile)
