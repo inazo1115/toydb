@@ -9,6 +9,4 @@ import (
 func TestWashInput(t *testing.T) {
 	util.Assert(t, WashInput("foobar;"), "foobar")
 	util.Assert(t, WashInput("foobar;;"), "foobar")
-	util.Assert(t, WashInput("foo\nbar;"), "foobar")
-	util.Assert(t, WashInput("\nfoo\nbar\n;"), "foobar")
 }
