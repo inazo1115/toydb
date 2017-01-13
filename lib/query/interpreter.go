@@ -6,32 +6,30 @@ import (
 )
 
 type Interpreter struct {
-	lexer     *Lexer
-	parser    *Parser
-	evaluator *Evaluator
-	ctx       *Context
+	runtime *Runtime
+	ctx     *Context
 }
 
 func NewInterpreter() *Interpreter {
 	bufman := storage.NewBufferManager()
 	diskman := storage.NewDiskManager()
 	runtime := NewRuntime(bufman, diskman)
-	return &Interpreter{NewLexer(), NewParser(), NewEvaluator(runtime), NewContext()}
+	return &Interpreter{runtime, NewContext()}
 }
 
 func (i *Interpreter) Interpret(q string) ([]*table.Record, error) {
 
-	tokens, err := i.lexer.Lex(q)
+	tokens, err := NewLexer(q).Lex()
 	if err != nil {
 		return nil, err
 	}
 
-	ast, err := i.parser.Parse(tokens)
+	ast, err := NewParser().Parse(tokens)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := i.evaluator.Eval(ast, i.ctx)
+	result, err := NewEvaluator(i.runtime).Eval(ast, i.ctx)
 	if err != nil {
 		return nil, err
 	}

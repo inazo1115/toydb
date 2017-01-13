@@ -7,23 +7,23 @@ import (
 )
 
 func TestParse0(t *testing.T) {
-	input := []LexToken{
-		LexToken{TokenCREATE, "create"},
-		LexToken{TokenTABLE, "table"},
-		LexToken{TokenKEY, "table_name"},
-		LexToken{TokenLPAREN, "("},
-		LexToken{TokenKEY, "name"},
-		LexToken{TokenSTRING, "string"},
-		LexToken{TokenLPAREN, "("},
-		LexToken{TokenVALUE, "20"},
-		LexToken{TokenRPAREN, ")"},
-		LexToken{TokenCOMMA, ","},
-		LexToken{TokenKEY, "age"},
-		LexToken{TokenINT, "int"},
-		LexToken{TokenCOMMA, ","},
-		LexToken{TokenKEY, "tel"},
-		LexToken{TokenINT, "int"},
-		LexToken{TokenRPAREN, ")"},
+	input := []*LexToken{
+		&LexToken{TokenCREATE, "create"},
+		&LexToken{TokenTABLE, "table"},
+		&LexToken{TokenKEY, "table_name"},
+		&LexToken{TokenLPAREN, "("},
+		&LexToken{TokenKEY, "name"},
+		&LexToken{TokenSTRING, "string"},
+		&LexToken{TokenLPAREN, "("},
+		&LexToken{TokenVALUE, "20"},
+		&LexToken{TokenRPAREN, ")"},
+		&LexToken{TokenCOMMA, ","},
+		&LexToken{TokenKEY, "age"},
+		&LexToken{TokenINT, "int"},
+		&LexToken{TokenCOMMA, ","},
+		&LexToken{TokenKEY, "tel"},
+		&LexToken{TokenINT, "int"},
+		&LexToken{TokenRPAREN, ")"},
 	}
 
 	actual, err := NewParser().Parse(input)
@@ -52,25 +52,25 @@ func TestParse0(t *testing.T) {
 }
 
 func TestParse1(t *testing.T) {
-	input := []LexToken{
-		LexToken{TokenINSERT, "insert"},
-		LexToken{TokenINTO, "into"},
-		LexToken{TokenKEY, "table_name"},
-		LexToken{TokenLPAREN, "("},
-		LexToken{TokenKEY, "name"},
-		LexToken{TokenCOMMA, ","},
-		LexToken{TokenKEY, "age"},
-		LexToken{TokenCOMMA, ","},
-		LexToken{TokenKEY, "tel"},
-		LexToken{TokenRPAREN, ")"},
-		LexToken{TokenVALUES, "values"},
-		LexToken{TokenLPAREN, "("},
-		LexToken{TokenVALUE, "\"foofoo\""},
-		LexToken{TokenCOMMA, ","},
-		LexToken{TokenVALUE, "100"},
-		LexToken{TokenCOMMA, ","},
-		LexToken{TokenVALUE, "200"},
-		LexToken{TokenRPAREN, ")"},
+	input := []*LexToken{
+		&LexToken{TokenINSERT, "insert"},
+		&LexToken{TokenINTO, "into"},
+		&LexToken{TokenKEY, "table_name"},
+		&LexToken{TokenLPAREN, "("},
+		&LexToken{TokenKEY, "name"},
+		&LexToken{TokenCOMMA, ","},
+		&LexToken{TokenKEY, "age"},
+		&LexToken{TokenCOMMA, ","},
+		&LexToken{TokenKEY, "tel"},
+		&LexToken{TokenRPAREN, ")"},
+		&LexToken{TokenVALUES, "values"},
+		&LexToken{TokenLPAREN, "("},
+		&LexToken{TokenVALUE, "\"foofoo\""},
+		&LexToken{TokenCOMMA, ","},
+		&LexToken{TokenVALUE, "100"},
+		&LexToken{TokenCOMMA, ","},
+		&LexToken{TokenVALUE, "200"},
+		&LexToken{TokenRPAREN, ")"},
 	}
 
 	actual, err := NewParser().Parse(input)
@@ -97,11 +97,11 @@ func TestParse1(t *testing.T) {
 }
 
 func TestParse2(t *testing.T) {
-	input := []LexToken{
-		LexToken{TokenSELECT, "select"},
-		LexToken{TokenTIMES, "*"},
-		LexToken{TokenFROM, "from"},
-		LexToken{TokenKEY, "table_name"},
+	input := []*LexToken{
+		&LexToken{TokenSELECT, "select"},
+		&LexToken{TokenTIMES, "*"},
+		&LexToken{TokenFROM, "from"},
+		&LexToken{TokenKEY, "table_name"},
 	}
 
 	actual, err := NewParser().Parse(input)

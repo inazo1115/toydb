@@ -14,11 +14,11 @@ var (
 //
 
 type ASTNode struct {
-	Token    LexToken
+	Token    *LexToken
 	Children []*ASTNode
 }
 
-func NewASTNode(token LexToken) *ASTNode {
+func NewASTNode(token *LexToken) *ASTNode {
 	return &ASTNode{token, make([]*ASTNode, 0)}
 }
 
@@ -37,7 +37,7 @@ func NewParser() *Parser {
 	return &Parser{}
 }
 
-func (p *Parser) Parse(tokens []LexToken) (*ASTNode, error) {
+func (p *Parser) Parse(tokens []*LexToken) (*ASTNode, error) {
 	switch {
 	case tokens[0].ID == TokenCREATE && tokens[1].ID == TokenTABLE:
 		return p.parseCreateTable(tokens)
@@ -50,7 +50,7 @@ func (p *Parser) Parse(tokens []LexToken) (*ASTNode, error) {
 	}
 }
 
-func (p *Parser) parseCreateTable(tokens []LexToken) (*ASTNode, error) {
+func (p *Parser) parseCreateTable(tokens []*LexToken) (*ASTNode, error) {
 
 	root := NewASTNode(tokens[0])
 
@@ -104,7 +104,7 @@ func (p *Parser) parseCreateTable(tokens []LexToken) (*ASTNode, error) {
 	return root, nil
 }
 
-func (p *Parser) parseInsert(tokens []LexToken) (*ASTNode, error) {
+func (p *Parser) parseInsert(tokens []*LexToken) (*ASTNode, error) {
 
 	root := NewASTNode(tokens[0])
 
@@ -156,7 +156,7 @@ func (p *Parser) parseInsert(tokens []LexToken) (*ASTNode, error) {
 	return root, nil
 }
 
-func (p *Parser) parseSelect(tokens []LexToken) (*ASTNode, error) {
+func (p *Parser) parseSelect(tokens []*LexToken) (*ASTNode, error) {
 
 	root := NewASTNode(tokens[0])
 

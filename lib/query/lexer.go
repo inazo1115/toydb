@@ -1,7 +1,6 @@
 package query
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -92,74 +91,203 @@ var symbolChars = []byte{
 //
 
 type Lexer struct {
+	input  []rune
+	carsor int         // Current index of input
+	pos    int         // Current rune pointer
+	line   int         // Current line pointer
+	tokens []*LexToken // Result of lex process
 }
 
-func NewLexer() *Lexer {
-	return &Lexer{}
+func NewLexer(input string) *Lexer {
+	return &Lexer{[]rune(input), 0, 0, 0, make([]*LexToken, 0)}
 }
 
-func (l *Lexer) Lex(query string) ([]LexToken, error) {
-
-	var token LexToken
-	var err error
-	rest := query
-	ret := make([]LexToken, 0)
-
+func (l *Lexer) Lex() ([]*LexToken, error) {
 	for {
-		rest = skipWhiteSpace(rest)
-		if len(rest) == 0 {
+		if still := l.skipWhiteSpace(); !still {
+			break
+		}
+		if err := l.lexToken(); err != nil {
+			return nil, err
+		}
+	}
+	return l.tokens, nil
+}
+
+func (l *Lexer) skipWhiteSpace() bool {
+
+	for l.carsor < len(l.input) {
+
+		r := l.input[l.carsor]
+
+		switch r {
+		case ' ':
+			l.pos++
+		case '\n':
+			l.line++
+			l.pos = 0
+		default:
+			return true
+		}
+		l.carsor++
+	}
+
+	return false
+}
+
+func (l *Lexer) lexToken() error {
+
+	r := l.input[l.carsor]
+
+	switch {
+	case isString(r):
+		return l.lexKey()
+
+	case isNumber(r):
+		return l.lexNumber()
+
+	case isQuoto(r):
+		return l.lexString()
+
+	case isSymbolChar(r):
+		return l.lexSymbol()
+
+	default:
+		return fmt.Errorf("lexToken: can't read token '%s' from %s", r, l.input)
+	}
+}
+
+// lexXxx
+
+func (l *Lexer) lexKey() error {
+
+	start := l.carsor
+
+	for l.carsor < len(l.input) {
+		r := l.input[l.carsor]
+		if !(isString(r) || isNumber(r)) {
+			break
+		}
+		l.carsor++
+		l.pos++
+	}
+
+	token := string(l.input[start:l.carsor])
+
+	if isKeyword(token) {
+		l.tokens = append(l.tokens, &LexToken{keywordMap[token], token})
+		return nil
+	}
+
+	l.tokens = append(l.tokens, &LexToken{TokenKEY, token})
+	return nil
+}
+
+func (l *Lexer) lexNumber() error {
+
+	start := l.carsor
+
+	for l.carsor < len(l.input) {
+		r := l.input[l.carsor]
+		if !isNumber(r) {
+			break
+		}
+		l.carsor++
+		l.pos++
+	}
+
+	token := string(l.input[start:l.carsor])
+
+	l.tokens = append(l.tokens, &LexToken{TokenVALUE, token})
+	return nil
+}
+
+func (l *Lexer) lexString() error {
+
+	quota := l.input[l.carsor]
+	l.carsor++
+	l.pos++
+	start := l.carsor
+	skip := make([]int, 0)
+
+	for l.carsor < len(l.input) {
+		r := l.input[l.carsor]
+
+		if r == '\\' {
+			skip = append(skip, l.carsor)
+			l.carsor += 2
+			l.pos += 2
+			continue
+		}
+
+		if r == quota {
+			l.carsor++
+			l.pos++
 			break
 		}
 
-		token, err = lexToken(rest)
-		if err != nil {
-			return []LexToken{}, err
+		if !(isString(r) || isNumber(r)) {
+			break
 		}
 
-		rest = rest[len(token.Val):]
-		ret = append(ret, token)
+		l.carsor++
+		l.pos++
 	}
 
-	return ret, nil
+	skip = append(skip, l.carsor-1)
+	tmp := make([]rune, 0)
+	for _, i := range skip {
+		tmp = append(tmp, l.input[start:i]...)
+		start = i + 1
+	}
+	token := string(tmp)
+
+	l.tokens = append(l.tokens, &LexToken{TokenVALUE, token})
+	return nil
 }
 
-func lexToken(s string) (LexToken, error) {
+func (l *Lexer) lexSymbol() error {
 
-	switch {
-	case isString(s[0]):
-		return lexKey(s), nil
+	start := l.carsor
 
-	case isNumber(s[0]):
-		return lexNumber(s), nil
+	for l.carsor < len(l.input) {
 
-	case isQuoto(s[0]):
-		return lexString(s), nil
+		r := l.input[l.carsor]
 
-	case isSymbolChar(s[0]):
-		return lexSymbol(s), nil
+		if !isSymbolChar(r) {
+			break
+		}
+		if !isSymbol(string(l.input[start : l.carsor+1])) {
+			break
+		}
 
-	default:
-		return LexToken{}, fmt.Errorf("lexToken: can't read token '%s' from %s", s[0], s)
+		l.carsor++
+		l.pos++
 	}
+
+	token := string(l.input[start:l.carsor])
+
+	l.tokens = append(l.tokens, &LexToken{symbolMap[token], token})
+	return nil
 }
 
 // isXxx(byte)
 
-func isString(b byte) bool {
-	return ('a' <= b && b <= 'z') || b == '_'
+func isString(r rune) bool {
+	return (rune('a') <= r && r <= rune('z')) || r == rune('_')
 }
 
-func isNumber(b byte) bool {
-	return '0' <= b && b <= '9'
+func isNumber(r rune) bool {
+	return rune('0') <= r && r <= rune('9')
 }
 
-func isQuoto(b byte) bool {
-	return '"' == b || b == '\''
+func isQuoto(r rune) bool {
+	return rune('"') == r || r == rune('\'')
 }
 
-func isSymbolChar(b byte) bool {
+func isSymbolChar(r rune) bool {
 	for _, s := range symbolChars {
-		if b == s {
+		if r == rune(s) {
 			return true
 		}
 	}
@@ -176,113 +304,4 @@ func isKeyword(s string) bool {
 func isSymbol(s string) bool {
 	_, ok := symbolMap[s]
 	return ok
-}
-
-// lexXxx
-
-func lexKey(s string) LexToken {
-
-	buf := make([]byte, 0)
-	for _, r := range s {
-		b := byte(r)
-		if !isString(b) {
-			break
-		}
-		buf = append(buf, b)
-	}
-
-	token := string(buf)
-
-	if isKeyword(token) {
-		return LexToken{keywordMap[token], token}
-	}
-	return LexToken{TokenKEY, token}
-}
-
-func lexNumber(s string) LexToken {
-
-	buf := make([]byte, 0)
-	for _, r := range s {
-		b := byte(r)
-		if !isNumber(b) {
-			break
-		}
-		buf = append(buf, b)
-	}
-
-	token := string(buf)
-
-	return LexToken{TokenVALUE, token}
-}
-
-func lexString(s string) LexToken {
-
-	quota := s[0]
-	buf := make([]byte, 1)
-	buf = append(buf, quota)
-
-	for i := 1; i < len(s); i++ {
-
-		b := s[i]
-
-		if b == quota {
-			buf = append(buf, b)
-			break
-		}
-
-		if b == '\\' {
-			buf = append(buf, b)
-			buf = append(buf, s[i+1])
-			i++
-			break
-		}
-
-		if !isString(b) {
-			break
-		}
-
-		buf = append(buf, b)
-	}
-
-	// I don't know why this code is required.
-	buf = bytes.Trim(buf, string(0))
-
-	token := string(buf)
-
-	return LexToken{TokenVALUE, token}
-}
-
-func lexSymbol(s string) LexToken {
-
-	buf := make([]byte, 0)
-
-	for _, r := range s {
-		b := byte(r)
-		if !isSymbolChar(b) {
-			break
-		}
-		if !isSymbol(string(append(buf, b))) {
-			break
-		}
-		buf = append(buf, b)
-	}
-
-	token := string(buf)
-
-	return LexToken{symbolMap[token], token}
-}
-
-// Unitily functions
-
-func skipWhiteSpace(s string) string {
-
-	if len(s) == 0 {
-		return ""
-	}
-
-	if s[0] == ' ' {
-		return skipWhiteSpace(s[1:])
-	}
-
-	return s
 }
