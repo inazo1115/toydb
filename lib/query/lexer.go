@@ -9,8 +9,30 @@ import (
 //
 
 type LexToken struct {
-	ID  LexTokenID
-	Val string
+	id   LexTokenID
+	val  string
+	pos  int
+	line int
+}
+
+func NewLexToken(id LexTokenID, val string, pos int, line int) *LexToken {
+	return &LexToken{id, val, pos, line}
+}
+
+func (t *LexToken) ID() LexTokenID {
+	return t.id
+}
+
+func (t *LexToken) Val() string {
+	return t.val
+}
+
+func (t *LexToken) Pos() int {
+	return t.pos
+}
+
+func (t *LexToken) Line() int {
+	return t.line
 }
 
 var keywordMap = map[string]LexTokenID{
@@ -162,6 +184,8 @@ func (l *Lexer) lexToken() error {
 func (l *Lexer) lexKey() error {
 
 	start := l.carsor
+	pos := l.pos
+	line := l.line
 
 	for l.carsor < len(l.input) {
 		r := l.input[l.carsor]
@@ -175,17 +199,19 @@ func (l *Lexer) lexKey() error {
 	token := string(l.input[start:l.carsor])
 
 	if isKeyword(token) {
-		l.tokens = append(l.tokens, &LexToken{keywordMap[token], token})
+		l.tokens = append(l.tokens, NewLexToken(keywordMap[token], token, pos, line))
 		return nil
 	}
 
-	l.tokens = append(l.tokens, &LexToken{TokenKEY, token})
+	l.tokens = append(l.tokens, NewLexToken(TokenKEY, token, pos, line))
 	return nil
 }
 
 func (l *Lexer) lexNumber() error {
 
 	start := l.carsor
+	pos := l.pos
+	line := l.line
 
 	for l.carsor < len(l.input) {
 		r := l.input[l.carsor]
@@ -198,11 +224,14 @@ func (l *Lexer) lexNumber() error {
 
 	token := string(l.input[start:l.carsor])
 
-	l.tokens = append(l.tokens, &LexToken{TokenVALUE, token})
+	l.tokens = append(l.tokens, NewLexToken(TokenVALUE, token, pos, line))
 	return nil
 }
 
 func (l *Lexer) lexString() error {
+
+	pos := l.pos
+	line := l.line
 
 	quota := l.input[l.carsor]
 	l.carsor++
@@ -242,13 +271,15 @@ func (l *Lexer) lexString() error {
 	}
 	token := string(tmp)
 
-	l.tokens = append(l.tokens, &LexToken{TokenVALUE, token})
+	l.tokens = append(l.tokens, NewLexToken(TokenVALUE, token, pos, line))
 	return nil
 }
 
 func (l *Lexer) lexSymbol() error {
 
 	start := l.carsor
+	pos := l.pos
+	line := l.line
 
 	for l.carsor < len(l.input) {
 
@@ -267,7 +298,7 @@ func (l *Lexer) lexSymbol() error {
 
 	token := string(l.input[start:l.carsor])
 
-	l.tokens = append(l.tokens, &LexToken{symbolMap[token], token})
+	l.tokens = append(l.tokens, NewLexToken(symbolMap[token], token, pos, line))
 	return nil
 }
 

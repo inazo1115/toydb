@@ -30,8 +30,8 @@ func TestLexKey0(t *testing.T) {
 	util.Assert(t, lexer.pos, 3)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenKEY)
-	util.Assert(t, lexer.tokens[0].Val, "foo")
+	util.Assert(t, lexer.tokens[0].ID(), TokenKEY)
+	util.Assert(t, lexer.tokens[0].Val(), "foo")
 }
 
 func TestLexKey1(t *testing.T) {
@@ -41,8 +41,8 @@ func TestLexKey1(t *testing.T) {
 	util.Assert(t, lexer.pos, 7)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenKEY)
-	util.Assert(t, lexer.tokens[0].Val, "foo2000")
+	util.Assert(t, lexer.tokens[0].ID(), TokenKEY)
+	util.Assert(t, lexer.tokens[0].Val(), "foo2000")
 }
 
 func TestLexKey2(t *testing.T) {
@@ -52,8 +52,8 @@ func TestLexKey2(t *testing.T) {
 	util.Assert(t, lexer.pos, 5)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenALTER)
-	util.Assert(t, lexer.tokens[0].Val, "alter")
+	util.Assert(t, lexer.tokens[0].ID(), TokenALTER)
+	util.Assert(t, lexer.tokens[0].Val(), "alter")
 }
 
 func TestLexNumber(t *testing.T) {
@@ -63,8 +63,8 @@ func TestLexNumber(t *testing.T) {
 	util.Assert(t, lexer.pos, 4)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenVALUE)
-	util.Assert(t, lexer.tokens[0].Val, "1000")
+	util.Assert(t, lexer.tokens[0].ID(), TokenVALUE)
+	util.Assert(t, lexer.tokens[0].Val(), "1000")
 }
 
 func TestLexString0(t *testing.T) {
@@ -74,8 +74,8 @@ func TestLexString0(t *testing.T) {
 	util.Assert(t, lexer.pos, 5)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenVALUE)
-	util.Assert(t, lexer.tokens[0].Val, "foo")
+	util.Assert(t, lexer.tokens[0].ID(), TokenVALUE)
+	util.Assert(t, lexer.tokens[0].Val(), "foo")
 }
 
 func TestLexString1(t *testing.T) {
@@ -85,8 +85,8 @@ func TestLexString1(t *testing.T) {
 	util.Assert(t, lexer.pos, 10)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenVALUE)
-	util.Assert(t, lexer.tokens[0].Val, "dosen't")
+	util.Assert(t, lexer.tokens[0].ID(), TokenVALUE)
+	util.Assert(t, lexer.tokens[0].Val(), "dosen't")
 }
 
 func TestLexString2(t *testing.T) {
@@ -96,8 +96,8 @@ func TestLexString2(t *testing.T) {
 	util.Assert(t, lexer.pos, 12)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenVALUE)
-	util.Assert(t, lexer.tokens[0].Val, "foo2000foo")
+	util.Assert(t, lexer.tokens[0].ID(), TokenVALUE)
+	util.Assert(t, lexer.tokens[0].Val(), "foo2000foo")
 }
 
 func TestLexSymbol0(t *testing.T) {
@@ -107,8 +107,8 @@ func TestLexSymbol0(t *testing.T) {
 	util.Assert(t, lexer.pos, 1)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenAT)
-	util.Assert(t, lexer.tokens[0].Val, "@")
+	util.Assert(t, lexer.tokens[0].ID(), TokenAT)
+	util.Assert(t, lexer.tokens[0].Val(), "@")
 }
 
 func TestLexSymbol1(t *testing.T) {
@@ -118,29 +118,29 @@ func TestLexSymbol1(t *testing.T) {
 	util.Assert(t, lexer.pos, 2)
 	util.Assert(t, lexer.line, 0)
 	util.Assert(t, len(lexer.tokens), 1)
-	util.Assert(t, lexer.tokens[0].ID, TokenGEQ)
-	util.Assert(t, lexer.tokens[0].Val, ">=")
+	util.Assert(t, lexer.tokens[0].ID(), TokenGEQ)
+	util.Assert(t, lexer.tokens[0].Val(), ">=")
 }
 
 func TestLex0(t *testing.T) {
 	input := "create table table_name (name string(20), age int, tel int)"
 	expected := []*LexToken{
-		&LexToken{TokenCREATE, "create"},
-		&LexToken{TokenTABLE, "table"},
-		&LexToken{TokenKEY, "table_name"},
-		&LexToken{TokenLPAREN, "("},
-		&LexToken{TokenKEY, "name"},
-		&LexToken{TokenSTRING, "string"},
-		&LexToken{TokenLPAREN, "("},
-		&LexToken{TokenVALUE, "20"},
-		&LexToken{TokenRPAREN, ")"},
-		&LexToken{TokenCOMMA, ","},
-		&LexToken{TokenKEY, "age"},
-		&LexToken{TokenINT, "int"},
-		&LexToken{TokenCOMMA, ","},
-		&LexToken{TokenKEY, "tel"},
-		&LexToken{TokenINT, "int"},
-		&LexToken{TokenRPAREN, ")"},
+		&LexToken{TokenCREATE, "create", 0, 0},
+		&LexToken{TokenTABLE, "table", 7, 0},
+		&LexToken{TokenKEY, "table_name", 13, 0},
+		&LexToken{TokenLPAREN, "(", 24, 0},
+		&LexToken{TokenKEY, "name", 25, 0},
+		&LexToken{TokenSTRING, "string", 30, 0},
+		&LexToken{TokenLPAREN, "(", 36, 0},
+		&LexToken{TokenVALUE, "20", 37, 0},
+		&LexToken{TokenRPAREN, ")", 39, 0},
+		&LexToken{TokenCOMMA, ",", 40, 0},
+		&LexToken{TokenKEY, "age", 42, 0},
+		&LexToken{TokenINT, "int", 46, 0},
+		&LexToken{TokenCOMMA, ",", 49, 0},
+		&LexToken{TokenKEY, "tel", 51, 0},
+		&LexToken{TokenINT, "int", 55, 0},
+		&LexToken{TokenRPAREN, ")", 58, 0},
 	}
 	actual, err := NewLexer(input).Lex()
 	if err != nil {
@@ -150,32 +150,34 @@ func TestLex0(t *testing.T) {
 	// Assert.
 	util.Assert(t, len(actual), len(expected))
 	for i := 0; i < len(actual); i++ {
-		util.Assert(t, actual[i].ID, expected[i].ID)
-		util.Assert(t, actual[i].Val, expected[i].Val)
+		util.Assert(t, actual[i].ID(), expected[i].ID())
+		util.Assert(t, actual[i].Val(), expected[i].Val())
+		util.Assert(t, actual[i].Pos(), expected[i].Pos())
+		util.Assert(t, actual[i].Line(), expected[i].Line())
 	}
 }
 
 func TestLex1(t *testing.T) {
 	input := "insert into table_name (name, age, tel) values (\"foofoo\", 100, 200)"
 	expected := []*LexToken{
-		&LexToken{TokenINSERT, "insert"},
-		&LexToken{TokenINTO, "into"},
-		&LexToken{TokenKEY, "table_name"},
-		&LexToken{TokenLPAREN, "("},
-		&LexToken{TokenKEY, "name"},
-		&LexToken{TokenCOMMA, ","},
-		&LexToken{TokenKEY, "age"},
-		&LexToken{TokenCOMMA, ","},
-		&LexToken{TokenKEY, "tel"},
-		&LexToken{TokenRPAREN, ")"},
-		&LexToken{TokenVALUES, "values"},
-		&LexToken{TokenLPAREN, "("},
-		&LexToken{TokenVALUE, "foofoo"},
-		&LexToken{TokenCOMMA, ","},
-		&LexToken{TokenVALUE, "100"},
-		&LexToken{TokenCOMMA, ","},
-		&LexToken{TokenVALUE, "200"},
-		&LexToken{TokenRPAREN, ")"},
+		&LexToken{TokenINSERT, "insert", 0, 0},
+		&LexToken{TokenINTO, "into", 7, 0},
+		&LexToken{TokenKEY, "table_name", 12, 0},
+		&LexToken{TokenLPAREN, "(", 23, 0},
+		&LexToken{TokenKEY, "name", 24, 0},
+		&LexToken{TokenCOMMA, ",", 28, 0},
+		&LexToken{TokenKEY, "age", 30, 0},
+		&LexToken{TokenCOMMA, ",", 33, 0},
+		&LexToken{TokenKEY, "tel", 35, 0},
+		&LexToken{TokenRPAREN, ")", 38, 0},
+		&LexToken{TokenVALUES, "values", 40, 0},
+		&LexToken{TokenLPAREN, "(", 47, 0},
+		&LexToken{TokenVALUE, "foofoo", 48, 0},
+		&LexToken{TokenCOMMA, ",", 56, 0},
+		&LexToken{TokenVALUE, "100", 58, 0},
+		&LexToken{TokenCOMMA, ",", 61, 0},
+		&LexToken{TokenVALUE, "200", 63, 0},
+		&LexToken{TokenRPAREN, ")", 66, 0},
 	}
 	actual, err := NewLexer(input).Lex()
 	if err != nil {
@@ -185,18 +187,20 @@ func TestLex1(t *testing.T) {
 	// Assert.
 	util.Assert(t, len(actual), len(expected))
 	for i := 0; i < len(actual); i++ {
-		util.Assert(t, actual[i].ID, expected[i].ID)
-		util.Assert(t, actual[i].Val, expected[i].Val)
+		util.Assert(t, actual[i].ID(), expected[i].ID())
+		util.Assert(t, actual[i].Val(), expected[i].Val())
+		util.Assert(t, actual[i].Pos(), expected[i].Pos())
+		util.Assert(t, actual[i].Line(), expected[i].Line())
 	}
 }
 
 func TestLex2(t *testing.T) {
 	input := "select * from table_name"
 	expected := []*LexToken{
-		&LexToken{TokenSELECT, "select"},
-		&LexToken{TokenTIMES, "*"},
-		&LexToken{TokenFROM, "from"},
-		&LexToken{TokenKEY, "table_name"},
+		&LexToken{TokenSELECT, "select", 0, 0},
+		&LexToken{TokenTIMES, "*", 7, 0},
+		&LexToken{TokenFROM, "from", 9, 0},
+		&LexToken{TokenKEY, "table_name", 14, 0},
 	}
 	actual, err := NewLexer(input).Lex()
 	if err != nil {
@@ -206,7 +210,9 @@ func TestLex2(t *testing.T) {
 	// Assert.
 	util.Assert(t, len(actual), len(expected))
 	for i := 0; i < len(actual); i++ {
-		util.Assert(t, actual[i].ID, expected[i].ID)
-		util.Assert(t, actual[i].Val, expected[i].Val)
+		util.Assert(t, actual[i].ID(), expected[i].ID())
+		util.Assert(t, actual[i].Val(), expected[i].Val())
+		util.Assert(t, actual[i].Pos(), expected[i].Pos())
+		util.Assert(t, actual[i].Line(), expected[i].Line())
 	}
 }

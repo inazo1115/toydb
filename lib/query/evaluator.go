@@ -18,7 +18,7 @@ func NewEvaluator(runtime *Runtime) *Evaluator {
 }
 
 func (e *Evaluator) Eval(ast *ASTNode, ctx *Context) ([]*table.Record, error) {
-	switch ast.Token.ID {
+	switch ast.Token.ID() {
 	case TokenCREATE:
 		return make([]*table.Record, 0), e.evalCreateTable(ast, ctx)
 	case TokenINSERT:
@@ -32,7 +32,7 @@ func (e *Evaluator) Eval(ast *ASTNode, ctx *Context) ([]*table.Record, error) {
 
 func (e *Evaluator) evalCreateTable(ast *ASTNode, ctx *Context) error {
 
-	tableName := ast.Children[0].Token.Val
+	tableName := ast.Children[0].Token.Val()
 	ctx.SetCurrentTable(tableName) // tmp
 
 	cols := make([]*table.Column, 0)
@@ -43,16 +43,16 @@ func (e *Evaluator) evalCreateTable(ast *ASTNode, ctx *Context) error {
 		typ := ast.Children[i+1]
 
 		var newCol *table.Column
-		switch typ.Token.ID {
+		switch typ.Token.ID() {
 		case TokenSTRING:
-			intv, err := strconv.Atoi(typ.Children[0].Token.Val)
+			intv, err := strconv.Atoi(typ.Children[0].Token.Val())
 			if err != nil {
 				return err
 			}
 			size := int32(intv)
-			newCol = table.NewColumnString(col.Token.Val, size)
+			newCol = table.NewColumnString(col.Token.Val(), size)
 		case TokenINT:
-			newCol = table.NewColumnInt64(col.Token.Val)
+			newCol = table.NewColumnInt64(col.Token.Val())
 		}
 
 		cols = append(cols, newCol)
@@ -69,7 +69,7 @@ func (e *Evaluator) evalCreateTable(ast *ASTNode, ctx *Context) error {
 
 func (e *Evaluator) evalInsert(ast *ASTNode, ctx *Context) error {
 
-	tableName := ast.Children[0].Token.Val
+	tableName := ast.Children[0].Token.Val()
 	ctx.SetCurrentTable(tableName) // tmp
 
 	vals := make([]*table.Value, 0)
@@ -80,15 +80,15 @@ func (e *Evaluator) evalInsert(ast *ASTNode, ctx *Context) error {
 		val := ast.Children[i].Children[0]
 
 		var newVal *table.Value
-		t, err := ctx.CurrentSchema().Type(col.Token.Val)
+		t, err := ctx.CurrentSchema().Type(col.Token.Val())
 		if err != nil {
 			return err
 		}
 		switch t {
 		case table.STRING:
-			newVal = table.NewValueString(string(val.Token.Val))
+			newVal = table.NewValueString(string(val.Token.Val()))
 		case table.INT64:
-			intv, err := strconv.Atoi(val.Token.Val)
+			intv, err := strconv.Atoi(val.Token.Val())
 			if err != nil {
 				return err
 			}
@@ -106,7 +106,7 @@ func (e *Evaluator) evalInsert(ast *ASTNode, ctx *Context) error {
 }
 
 func (e *Evaluator) evalSelect(ast *ASTNode, ctx *Context) ([]*table.Record, error) {
-	tableName := ast.Children[0].Token.Val
+	tableName := ast.Children[0].Token.Val()
 	ctx.SetCurrentTable(tableName) // tmp
 	return ctx.CurrentFile().Scan()
 }
