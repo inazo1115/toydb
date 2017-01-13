@@ -2,6 +2,9 @@ DB_FILE = toy_db.dat
 LIB = ./lib/*
 
 test:
+	@for pkg in $(wildcard $(LIB)); do go test $$pkg; done
+
+test_v:
 	@for pkg in $(wildcard $(LIB)); do go test -v $$pkg; done
 
 run:
